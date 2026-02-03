@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: ghalactic/github-release-from-tag@v6
         with:
-        assets: |
-          - path: _publish
-            name: publish_asset_test
-            label: publish asset label test
+          assets: |
+            - path: _publish
+              name: publish_asset_test
+              label: publish asset label test
