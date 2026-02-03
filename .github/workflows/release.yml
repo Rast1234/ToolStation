@@ -27,6 +27,6 @@ jobs:
       - uses: ghalactic/github-release-from-tag@v6
         with:
           assets: |
-            - path: publish
-              name: publish_asset_test
-              label: publish asset label test
+            - path: *
+              name: test_asset
+              label: test asset label
