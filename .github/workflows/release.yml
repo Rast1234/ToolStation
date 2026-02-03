@@ -17,6 +17,7 @@ jobs:
         name: publish
         path: _publish
   publish:
+    needs: build
     runs-on: ubuntu-latest
     concurrency: publish-release
     permissions:
