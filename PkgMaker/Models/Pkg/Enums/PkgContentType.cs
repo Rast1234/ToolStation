@@ -1,4 +1,4 @@
-namespace PkgMaker.Pkg.Enums;
+namespace PkgMaker.Models.Pkg.Enums;
 
 public enum PkgContentType : uint
 {

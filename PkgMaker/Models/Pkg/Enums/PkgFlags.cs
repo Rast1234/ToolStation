@@ -1,4 +1,4 @@
-namespace PkgMaker.Pkg.Enums;
+namespace PkgMaker.Models.Pkg.Enums;
 
 [Flags]
 public enum PkgFlags : uint

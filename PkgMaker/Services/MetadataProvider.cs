@@ -4,7 +4,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using NetBase32;
 using PkgMaker.Models;
-using PkgMaker.Sfo;
+using PkgMaker.Models.Sfo;
 
 namespace PkgMaker.Services;
 

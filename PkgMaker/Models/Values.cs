@@ -1,4 +1,4 @@
-using PkgMaker.Sfo;
+using PkgMaker.Models.Sfo;
 
 namespace PkgMaker.Models;
 

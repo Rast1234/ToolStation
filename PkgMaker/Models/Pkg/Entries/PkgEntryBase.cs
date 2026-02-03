@@ -1,7 +1,7 @@
-using PkgMaker.Pkg.Enums;
+using PkgMaker.Models.Pkg.Enums;
 using PkgMaker.Utils;
 
-namespace PkgMaker.Pkg.Entries;
+namespace PkgMaker.Models.Pkg.Entries;
 
 public abstract class PkgEntryBase : IPkgEntry
 {

@@ -3,9 +3,9 @@ using System.Diagnostics;
 using System.Text;
 using PkgMaker.Models;
 using PkgMaker.Models.Commands;
-using PkgMaker.Pkg;
-using PkgMaker.Pkg.Entries;
-using PkgMaker.Pkg.Enums;
+using PkgMaker.Models.Pkg;
+using PkgMaker.Models.Pkg.Entries;
+using PkgMaker.Models.Pkg.Enums;
 using PkgMaker.Utils;
 
 namespace PkgMaker.Services;

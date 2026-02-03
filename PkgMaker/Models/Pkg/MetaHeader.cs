@@ -1,7 +1,6 @@
-using PkgMaker.Models;
 using PkgMaker.Utils;
 
-namespace PkgMaker.Pkg;
+namespace PkgMaker.Models.Pkg;
 
 public class MetaHeader : IPackable
 {

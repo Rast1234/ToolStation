@@ -2,7 +2,7 @@ using System.Collections.Immutable;
 using DiscUtils.Iso9660;
 using FluentFTP;
 using PkgMaker.Models;
-using PkgMaker.Sfo;
+using PkgMaker.Models.Sfo;
 
 namespace PkgMaker.Utils;
 

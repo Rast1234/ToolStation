@@ -1,4 +1,4 @@
-namespace PkgMaker.Sfo;
+namespace PkgMaker.Models.Sfo;
 
 public class SfoKey
 {

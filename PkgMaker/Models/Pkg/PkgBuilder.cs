@@ -1,10 +1,10 @@
 using System.Security.Cryptography;
 using System.Text;
-using PkgMaker.Pkg.Entries;
-using PkgMaker.Pkg.Enums;
+using PkgMaker.Models.Pkg.Entries;
+using PkgMaker.Models.Pkg.Enums;
 using PkgMaker.Utils;
 
-namespace PkgMaker.Pkg;
+namespace PkgMaker.Models.Pkg;
 
 public class PkgBuilder
 {

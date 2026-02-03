@@ -1,9 +1,8 @@
 using System.Text;
-using PkgMaker.Models;
-using PkgMaker.Pkg.Entries;
+using PkgMaker.Models.Pkg.Entries;
 using PkgMaker.Utils;
 
-namespace PkgMaker.Sfo;
+namespace PkgMaker.Models.Sfo;
 
 public class ParamSfo : IPackable
 {

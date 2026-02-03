@@ -1,6 +1,6 @@
-using PkgMaker.Pkg.Enums;
+using PkgMaker.Models.Pkg.Enums;
 
-namespace PkgMaker.Pkg.Entries;
+namespace PkgMaker.Models.Pkg.Entries;
 
 public interface IPkgEntry
 {
