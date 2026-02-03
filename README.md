@@ -2,11 +2,6 @@
 
 Tools for PS3
 
-## TODO RELEASE
- * builds with aot, trim, single file, self contain, wtf? try and validate on windows and linux
- * github, readme, posts
- * include C source and Makefile
-
 ## PkgMaker <span float="left"><img src="icon.png" /></span>
 
 ![logo](logo.png)
