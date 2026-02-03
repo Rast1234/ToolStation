@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PkgMaker", "PkgMaker\PkgMaker.csproj", "{5487C255-722D-4639-86F7-E37237F1EF57}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5487C255-722D-4639-86F7-E37237F1EF57}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5487C255-722D-4639-86F7-E37237F1EF57}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5487C255-722D-4639-86F7-E37237F1EF57}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5487C255-722D-4639-86F7-E37237F1EF57}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

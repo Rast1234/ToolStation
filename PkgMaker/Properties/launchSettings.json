@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "PkgMaker no args": {
+      "commandName": "Project",
+      "commandLineArgs": "launcher"
+    },
+    "PkgMaker beep": {
+      "commandName": "Project",
+      "commandLineArgs": "launcher -f -i BEEPBEEEP -t \"Beep Beeep!\nbeep\nbeep beep\" -l 0000000000000000 -g nothing -c \"/beep.ps3?1;/wait.ps3?1;/beep.ps3?1;/wait.ps3?1;/beep.ps3?3;/wait.ps3?1;/beep.ps3?1;/wait.ps3?1;/beep.ps3?3;/wait.ps3?1;/beep.ps3?2\""
+    }
+  }
+}
