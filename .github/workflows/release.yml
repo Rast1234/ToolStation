@@ -27,7 +27,7 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           name: publish_artifact
-      - run: ls -l
+          path: _publish
       - uses: ghalactic/github-release-from-tag@v6
         with:
           assets: |
