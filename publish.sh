@@ -3,7 +3,6 @@
 # get tag version "vX" from github or use placeholder
 raw_version="${GITHUB_REF_NAME:-v1}"
 version="${raw_version//v}"
-echo "$raw_version -> $version"
 if !  [ "${raw_version}" == v"${version}" ] ; then
     echo "Tag is not in format 'vX': ${raw_version}"
     exit 2
@@ -13,7 +12,7 @@ if !  [ "$version" -eq "$version" ] 2>/dev/null; then
     exit 3
 fi
 
-echo "Version is ${version}"
+echo "Version is [${version}]"
 
 # building eboot.bin requires ps3toolchain
 # cd homebrew; make npdrm

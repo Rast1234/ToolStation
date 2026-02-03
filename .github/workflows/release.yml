@@ -1,4 +1,4 @@
-name: Release
+name: Create release from tag
 on:
   push:
     tags:
@@ -16,7 +16,7 @@ jobs:
       with:
         name: publish
         path: _publish
-  publish:
+  release:
     needs: build
     runs-on: ubuntu-latest
     concurrency: publish-release
@@ -27,6 +27,6 @@ jobs:
       - uses: ghalactic/github-release-from-tag@v6
         with:
           assets: |
-            - path: _publish
+            - path: publish
               name: publish_asset_test
               label: publish asset label test
