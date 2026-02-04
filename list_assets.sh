@@ -8,10 +8,8 @@ do
     for path in "${p}"/* ;
     do
         name=${path##*/}
-        archive="${name} ${platform} build.zip"
-        echo "${archive} - ${name} - ${platform}"
+        archive="${name}.${platform}.zip"
         zip -j "${archive}" "${path}"
-        #line='{"path":"'"${archive}"'","name":"'"${archive}"'","label":"'"${archive}"'"},'
         line='{"path":"'"${archive}"'"},'
         echo -n "${line}" >> assets.json
     done
