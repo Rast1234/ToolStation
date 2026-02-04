@@ -7,7 +7,7 @@ do
     platform=${p##*/}
     for path in "${p}"/* ;
     do
-        name=${file##*/}
+        name=${path##*/}
         archive="${name} ${platform} build.zip"
         echo "${archive} - ${name} - ${platform}"
         zip -j "${archive}" "${path}"
