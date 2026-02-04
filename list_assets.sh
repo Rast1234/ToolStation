@@ -4,7 +4,7 @@
 
 # _publish/$platform/binary.whatever
 
-echo '['
+echo -n '['
 for p in _publish/* ;
 do
     platform=${p##*/}
@@ -12,8 +12,8 @@ do
     do
         artifact=${file##*/}
         #echo "${p} - ${x} - ${platform} - ${artifact}"
-        line='  {"path":"'"${file}"'","name":"'"${artifact}"'","label":"'"${platform}"' build"},'
-        echo "${line}"
+        line='{"path":"'"${file}"'","name":"'"${artifact}"'","label":"'"${platform}"' build"},'
+        echo -n "${line}"
     done
 done
-echo ']'
+echo -n ']'
