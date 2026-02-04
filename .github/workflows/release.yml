@@ -31,6 +31,7 @@ jobs:
       - run: ./list_assets.sh
       - id: listAssets
         run: echo "assets=$(cat assets.json)" >> $GITHUB_OUTPUT
+      - run: ls -lh
       - uses: ghalactic/github-release-from-tag@v6
         with:
           assets: ${{ steps.listAssets.outputs.assets }}

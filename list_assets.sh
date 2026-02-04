@@ -9,6 +9,7 @@ do
     do
         name=${file##*/}
         archive="${name} ${platform} build.zip"
+        echo "${archive} - ${name} - ${platform}"
         zip -j "${archive}" "${path}"
         #line='{"path":"'"${archive}"'","name":"'"${archive}"'","label":"'"${archive}"'"},'
         line='{"path":"'"${archive}"'"},'
