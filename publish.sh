@@ -27,7 +27,6 @@ dotnet build -warnaserror
 for project in */*.csproj ;
 do
     dotnet publish "${project}" -p:version="${version}" -o "_publish/runtime-dependent" -c Release -p:DebugType=None -p:DebugSymbols=false -p:PublishSingleFile=true --no-self-contained
-    break # TODO REMOVE ME
     for platform in linux-x64 win-x64 osx-arm64 ;
     do
         dotnet publish "${project}" -p:version="${version}" -o "_publish/${platform}" -r "${platform}" -c Release -p:DebugType=None -p:DebugSymbols=false -p:PublishSingleFile=true --self-contained -p:PublishTrimmed=true
