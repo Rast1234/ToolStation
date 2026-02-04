@@ -28,9 +28,8 @@ jobs:
         with:
           name: publish_artifact
           path: _publish
+      - id: listAssets
+        run: echo "assets=$(bash list_assets.sh)" >> $GITHUB_OUTPUT
       - uses: ghalactic/github-release-from-tag@v6
         with:
-          assets: |
-            - path: _publish
-              name: test_asset
-              label: test asset label
+          assets: ${{ steps.listAssets.outputs.assets }}
