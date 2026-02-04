@@ -5,12 +5,12 @@ echo -n '['
 for p in _publish/* ;
 do
     platform=${p##*/}
-    platform="${platform^^}"
-    for file in "${p}"/* ;
+    for path in "${p}"/* ;
     do
-        artifact=${file##*/}
-        #echo "${p} - ${x} - ${platform} - ${artifact}"
-        line='{"path":"'"${file}"'","name":"'"${artifact}"'","label":"'"${artifact} ${platform}"' Build"},'
+        name=${file##*/}
+        archive="${name} ${platform} build.zip"
+        zip -j "${archive}" "${path}"
+        line='{"path":"'"${archive}"'","name":"'"${archive}"'","label":"'"${archive}"'"},'
         echo -n "${line}"
     done
 done
