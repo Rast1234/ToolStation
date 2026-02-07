@@ -26,7 +26,7 @@ internal sealed class Installer : Command
 
            Pack mod for a game my_mod/dev_hdd0/game/BLES00000/*
            > {app} installer -i "my_mod"
-             out/my_mod.pkg that writes data to dev_hdd0/game/BLES00000
+             out/my_mod.pkg that writes data to /dev_hdd0/game/BLES00000
 
            Pack flash mod from danger/dev_blind/*
            > {app} installer -i "danger" -n brick

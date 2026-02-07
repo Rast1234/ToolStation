@@ -29,7 +29,14 @@ And here's what i have. Custom background image, icon and name taken from ISO, a
 
 ### Usage
 
-`PkgMaker` is a console app. Everything is described in `--help`. There are several commands: `launcher` to build pkg, and `prepare` to look for games and output a script for later editing and building packages, `installer` to build pkg that installs files anywhere. If you want to create launchers for all existing games on your PS3 in bulk, do it with `prepare` and specify remote location like `ftp://ps3.lan/dev_hdd0` or `http://10.10.10.3/`. Then edit generated `make_launch_pkgs` script to provide custom backgrounds for each game, disable sounds, change games to launch etc.
+`PkgMaker` is a console app. Everything is described in `--help`. There are several commands:
+
+* `launcher` to build pkg
+* `prepare` to look for games and output a script for later editing and building packages
+* `installer` to build pkg that installs files anywhere
+* `manual` to control pkg creation parameters
+
+If you want to create launchers for all existing games on your PS3 in bulk, do it with `prepare` and specify remote location like `ftp://ps3.lan/dev_hdd0` or `http://10.10.10.3/`. Then edit generated `make_launch_pkgs` script to provide custom backgrounds for each game, disable sounds, change games to launch etc.
 
 For best results i recommend storing ISOs and game folders with a TITLE_ID in their names - this way Webman will have no problem locating unique games.
 
@@ -83,7 +90,6 @@ Specify multiline app title (bash syntax), label, custom Webman command, and exc
 * script.txt is a Webman bat that is called from HTTP command. Try executing it yourself, inserting beep1/beep2 between lines to see where it fails
 * No access to files? Check launcher "Update History" in XMB, launch and script contents are copied there by default
 
-
 ## `PkgMaker prepare`
 
 ### Examples
@@ -123,11 +129,82 @@ Scan for ISOs or game folders everywhere on remote system
 * Other formats mountable by Webman (ROMS, .BIN/.CUE, etc) are not supported yet. Create Github issue if you can help with testing
 * Some folders are blacklisted from search over FTP and HTTP to avoid wasting time, eg `/dev_blind` or `/dev_hdd0/game`
 
+## `PkgMaker installer`
 
+### Examples
+
+<details><summary><b>Click to expand ℹ️</b></summary>
+
+#### Pack your webman config
+
+`PkgMaker installer -i "C:\example"`
+
+If you had ` C:\example\dev_hdd0\tmp\wm_config.bin`, result is `out/example.pkg` that writes file to `/dev_hdd0/tmp/wm_config.bin`
+
+#### Pack mod for a game
+
+`PkgMaker installer -i "my_mod"`
+
+If you had `my_mod/dev_hdd0/game/BLES00000/*`, result is `out/my_mod.pkg` that writes data to `/dev_hdd0/game/BLES00000`
+
+#### Pack flash mod
+
+`PkgMaker installer -i "danger" -n brick`
+
+If you had `danger/dev_blind/*`, result is `out/brick.pkg` that writes data to `/dev_blind` - writable flash should be enabled before installing
+
+</details>
+
+### Notes
+
+* Does not create any visible entries in XMB - no way to uninstall
+* Always overwrites existing files - be careful!
+
+## `PkgMaker manual`
+
+### Examples
+
+<details><summary><b>Click to expand ℹ️</b></summary>
+
+#### Pack something
+
+`PkgMaker manual -i "path/to/example"`
+
+`out/example.pkg` with contents of example directory, not that it is useful because `ContentId` is empty
+
+#### Pack mod for a game
+
+`PkgMaker manual -i "my_mod" -c GameData -n TEST00-BLES00000_00-0000000000000000`
+
+Pkg that writes data to /dev_hdd0/game/BLES00000 because package name has valid ContentId
+
+#### Pack with specific types
+
+`PkgMaker manual -i "example" -c 16 -p 0x123ABC`
+
+Enum values: content type as int, arbitrary package type as hex
+
+</details>
+
+### Enum values
+
+Supported formats: int (10), hex (0xA), known name (Widget). All case-insensitive. Unknown values also supported when passed as numbers.
+
+`PkgContentType`: GameData=0x4, GameExec=0x5, Ps1Classic=0x6, Psp=0x7, Theme=0x9, Widget=0xA, License=0xB, VshModule=0xC, PsnAvatar=0xD, PspGo=0xE, Minis=0xF, NeoGeo=0x10, Vmc=0x11, Ps2Classic=0x12, PspRemaster=0x14, Web
+Tv=0x19
+
+`PkgType`: DemoAndKeyNoOverwrite=0x0, DemoAndKey=0x8, Normal=0xE, Patch=0x10
+
+### Notes
+
+* Files are packed with flags = `Raw|Overwrites`
+* All EBOOT.BIN files are packed with flags = `NPDRM|Overwrites`, because it's required i guess?
+* PARAM.SFO is not interpreted in any way. You have to set package and content types yourself
+* Creating pkgs that write to absolute paths is not allowed - use "installer" command for that
 
 ## EBOOT.BIN
 
-Compiled homebrew, based on `PKGLAUNCH`. How it works:
+Launcher comes with compiled homebrew, based on `PKGLAUNCH`. How it works:
 
 * `syscall 30` to determine current TITLE_ID
 * assume current app working directory is `/dev_hdd0/game/TITLE_ID/`

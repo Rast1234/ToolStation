@@ -29,7 +29,7 @@ internal sealed class Manual : Command
 
            Pack mod for a game
            > {app} manual -i "my_mod" -c GameData -n TEST00-BLES00000_00-0000000000000000
-             pkg that writes data to dev_hdd0/game/BLES00000 because package name has valid ContentId
+             pkg that writes data to /dev_hdd0/game/BLES00000 because package name has valid ContentId
 
            Pack with specific types
            > {app} manual -i "example" -c 16 -p 0x123ABC
