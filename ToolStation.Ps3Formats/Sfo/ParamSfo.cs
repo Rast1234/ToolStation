@@ -1,8 +1,8 @@
 using System.Text;
-using PkgMaker.Models.Pkg.Entries;
-using PkgMaker.Utils;
+using ToolStation.Ps3Formats.Pkg.Entries;
+using ToolStation.Ps3Formats.Utils;
 
-namespace PkgMaker.Models.Sfo;
+namespace ToolStation.Ps3Formats.Sfo;
 
 public class ParamSfo : IPackable
 {
@@ -38,10 +38,7 @@ public class ParamSfo : IPackable
         data.Add(key, item);
     }
 
-    public ParamSfoFile ToPkgFile(string fullPath)
-    {
-        return new ParamSfoFile((string) data["CATEGORY"].Value, fullPath, new MemoryStream(Pack()));
-    }
+    public ParamSfoFile ToPkgFile(string fullPath) => new((string) data["CATEGORY"].Value, fullPath, new MemoryStream(Pack()));
 
     public byte[] Pack()
     {
@@ -58,11 +55,16 @@ public class ParamSfo : IPackable
             keyTableSize += k.Name!.Length + 1; // add space for null terminator
             dataTableSize += k.MaxLength;
             if (k.MaxLength % 0x4 > 0) // hacky alignment to 0x4 bytes
+            {
                 dataTableSize += 0x4 - k.MaxLength % 0x4;
+            }
         }
 
         if (keyTableSize % 0x4 > 0)
+        {
             keyTableSize += 0x4 - keyTableSize % 0x4;
+        }
+
         var dataTableStart = keyTableStart + keyTableSize;
 
         var keyTable = new byte[keyTableSize];
@@ -103,7 +105,9 @@ public class ParamSfo : IPackable
             Array.Copy(k.ByteValue, 0, dataTable, dataTableUsed, k.ByteValue.Length);
             dataTableUsed += k.MaxLength;
             if (k.MaxLength % 0x4 > 0) // hacky alignment to 0x4 bytes
+            {
                 dataTableUsed += 0x4 - k.MaxLength % 0x4;
+            }
         }
 
         // write out the key and data tables
@@ -114,19 +118,33 @@ public class ParamSfo : IPackable
 
     public static ParamSfo? Read(byte[]? x)
     {
-        if (x is null) return null;
+        if (x is null)
+        {
+            return null;
+        }
 
         return Read(new MemoryStream(x));
     }
 
     public static ParamSfo Read(Stream s)
     {
-        if (s.Position != 0) throw new ArgumentException("SFO stream must be at position 0");
+        if (s.Position != 0)
+        {
+            throw new ArgumentException("SFO stream must be at position 0");
+        }
 
         var sfo = new ParamSfo();
 
-        if (s.ReadInt32BE() != 0x00505346) throw new Exception("Invalid header");
-        if (s.ReadInt32LE() != 0x00000101) throw new Exception("Invalid version");
+        if (s.ReadInt32BE() != 0x00505346)
+        {
+            throw new InvalidOperationException("Invalid header");
+        }
+
+        if (s.ReadInt32LE() != 0x00000101)
+        {
+            throw new InvalidOperationException("Invalid version");
+        }
+
         var keyBlockStart = s.ReadUInt32LE();
         var dataBlockStart = s.ReadUInt32LE();
         var keys = s.ReadUInt32LE();
@@ -165,4 +183,6 @@ public class ParamSfo : IPackable
 
         return sfo;
     }
+
+    public override string ToString() => string.Join("\n", data.Select(x => x.Value.ToString()));
 }

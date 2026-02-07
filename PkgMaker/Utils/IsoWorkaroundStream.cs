@@ -6,7 +6,7 @@ namespace PkgMaker.Utils;
 /// Recreates inner stream in case of rewind, maintains its own position, enforces exact reads (which is bad at end of stream)
 /// </summary>
 /// <remarks>DO NOT USE for read-to-end operations like full file downloading</remarks>
-internal class IsoWorkaroundStream : Stream
+internal sealed class IsoWorkaroundStream : Stream
 {
     public override bool CanRead => true;
 
@@ -19,9 +19,13 @@ internal class IsoWorkaroundStream : Stream
     public override long Position
     {
         get => position;
+
         set
         {
-            if (position == value) return;
+            if (position == value)
+            {
+                return;
+            }
 
             if (dumbFactory)
             {
@@ -69,10 +73,7 @@ internal class IsoWorkaroundStream : Stream
     /// <summary>
     /// HTTP stream can only be created from scratch, and does not even support position or length
     /// </summary>
-    public IsoWorkaroundStream(Func<Stream> dumbStreamFactory) : this(_ => dumbStreamFactory())
-    {
-        dumbFactory = true;
-    }
+    public IsoWorkaroundStream(Func<Stream> dumbStreamFactory) : this(_ => dumbStreamFactory()) => dumbFactory = true;
 
     public override int Read(byte[] buffer, int offset, int count)
     {
@@ -88,25 +89,13 @@ internal class IsoWorkaroundStream : Stream
         await base.DisposeAsync();
     }
 
-    public override void Flush()
-    {
-        throw new NotImplementedException();
-    }
+    public override void Flush() => throw new NotSupportedException();
 
-    public override long Seek(long offset, SeekOrigin origin)
-    {
-        throw new NotImplementedException();
-    }
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
 
-    public override void SetLength(long value)
-    {
-        throw new NotImplementedException();
-    }
+    public override void SetLength(long value) => throw new NotSupportedException();
 
-    public override void Write(byte[] buffer, int offset, int count)
-    {
-        throw new NotImplementedException();
-    }
+    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 
     private void RecreateStreamAtOffset(long value)
     {
@@ -119,7 +108,10 @@ internal class IsoWorkaroundStream : Stream
         var x = dst - pos;
         var chunks = x / DevNull.Length;
         var remainder = x % DevNull.Length;
-        for (var i = 0; i < chunks; i++) s.ReadExactly(DevNull.AsSpan(new Range(0, DevNull.Length)));
+        for (var i = 0; i < chunks; i++)
+        {
+            s.ReadExactly(DevNull.AsSpan(new Range(0, DevNull.Length)));
+        }
 
         s.ReadExactly(DevNull.AsSpan(new Range(0, (int) remainder)));
         return s;

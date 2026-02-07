@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using PkgMaker.Utils;
+using ToolStation.Ps3Formats.Utils;
 
-namespace PkgMaker.Models.Pkg;
+namespace ToolStation.Ps3Formats.Pkg;
 
+[SuppressMessage("Performance", "CA1805:Do not initialize unnecessarily", Justification = "For clarity")]
 public class Header : IPackable
 {
     public uint Magic = 0x7F504B47;
@@ -11,10 +13,10 @@ public class Header : IPackable
     public uint MetadataOffset = 0xC0;
     public uint MetadataCount = 0x05; // unk1 ?
     public uint MetadataSize = 0x80;
-    public uint NumberOfItems;
-    public ulong TotalPackageSize;
+    public uint NumberOfItems = 0;
+    public ulong TotalPackageSize = 0;
     public ulong DataOffset = 0x140;
-    public ulong DataSize;
+    public ulong DataSize = 0;
     public byte[] ContentId = new byte[0x30];
     public byte[] QaDigest = new byte[0x10];
     public byte[] KLicensee = new byte[0x10];
@@ -22,7 +24,10 @@ public class Header : IPackable
     public void SetContentId(string value)
     {
         var id = Encoding.UTF8.GetBytes(value);
-        if (id.Length > 0x30) throw new ArgumentException($"ContentId too long, expected <= 0x30 bytes: [{ContentId}]");
+        if (id.Length > 0x30)
+        {
+            throw new ArgumentException($"ContentId too long, expected <= 0x30 bytes: [{ContentId}]");
+        }
 
         id.CopyTo(ContentId);
     }

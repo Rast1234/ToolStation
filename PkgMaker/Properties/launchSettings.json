@@ -2,7 +2,7 @@
   "profiles": {
     "PkgMaker no args": {
       "commandName": "Project",
-      "commandLineArgs": "launcher"
+      "commandLineArgs": ""
     },
     "PkgMaker beep": {
       "commandName": "Project",

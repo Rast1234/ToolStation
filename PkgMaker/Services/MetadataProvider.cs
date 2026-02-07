@@ -1,32 +1,44 @@
 using System.CommandLine;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using NetBase32;
 using PkgMaker.Models;
-using PkgMaker.Models.Sfo;
+using ToolStation.Ps3Formats.Sfo;
 
 namespace PkgMaker.Services;
 
-public class MetadataProvider
+[SuppressMessage("Performance", "SYSLIB1045:Convert to \'GeneratedRegexAttribute\'.", Justification = "What performance lol")]
+internal sealed class MetadataProvider
 {
-    public byte[]? GenerateCommand(string? arg, byte[]? fallback, string? appId)
+    public static byte[]? GenerateCommand(string? arg, byte[]? fallback, string? appId)
     {
         // TODO something special required for PSPISO? f'/mount_ps3{path};/wait.ps3?8;/browser.ps3$focus_segment_index xmb_app3 0;/wait.ps3?1;/browser.ps3$exec_push;/wait.ps3?1;/browser.ps3$focus_index 0 4;/wait.ps3?1;/browser.ps3$exec_push;/wait.ps3?1;/browser.ps3$exec_push;/wait.ps3?1;/browser.ps3$exec_push'
         ArgumentException.ThrowIfNullOrEmpty(appId);
-        if (arg != null) return Encoding.UTF8.GetBytes(arg);
+        if (arg != null)
+        {
+            return Encoding.UTF8.GetBytes(arg);
+        }
 
-        if (fallback != null) return fallback;
+        if (fallback != null)
+        {
+            return fallback;
+        }
+
         var defaultCmd = $"/wait.ps3?xmb;/play.ps3/dev_hdd0/game/{appId}/USRDIR/script.txt";
         return Encoding.UTF8.GetBytes(defaultCmd);
     }
 
-    public string? GenerateScript(string? scriptFile, string? appId, string? game, int timeout)
+    public static string? GenerateScript(string? scriptFile, string? appId, string? game, int timeout)
     {
         if (string.IsNullOrWhiteSpace(scriptFile))
         {
             ArgumentException.ThrowIfNullOrEmpty(appId);
-            if (string.IsNullOrWhiteSpace(game)) throw new ArgumentException("Game is not set. Specify with -g or use -b to autodetect");
+            if (string.IsNullOrWhiteSpace(game))
+            {
+                throw new ArgumentException("Game is not set. Specify with -g or use -b to autodetect");
+            }
 
             return GetDefaultScript(appId, game, timeout);
         }
@@ -40,7 +52,7 @@ public class MetadataProvider
         return File.ReadAllText(scriptFile);
     }
 
-    public async Task<ParamSfo?> GenerateParamSfo(string? file, Values values, CancellationToken token)
+    public static async Task<ParamSfo?> GenerateParamSfo(string? file, Values values, CancellationToken token)
     {
         if (string.IsNullOrWhiteSpace(file))
         {
@@ -69,29 +81,26 @@ public class MetadataProvider
         return ParamSfo.Read(await File.ReadAllBytesAsync(file, token));
     }
 
-    public string GenerateTitleId(string title)
+    public static string GenerateTitleId(string title)
     {
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(title));
         return $"{Prefix}{ZBase32.Encode(hash, FormatOptions.None)}"[..9];
     }
 
-    public string GenerateLabel(string title)
-    {
-        return title;
-    }
+    public static string GenerateLabel(string title) => title;
 
-    public string? GenerateParamHis(string? hisFile, ParseResult args, Values values)
+    public static string? GenerateParamHis(string? hisFile, ParseResult args, Values values)
     {
         if (string.IsNullOrWhiteSpace(hisFile))
         {
             return $"""
-                 Hello there! This is shortcut launcher {values.TitleId}
-                 Created with ToolStation PkgMaker
-                 launch.txt: {Encoding.UTF8.GetString(values.Command ?? [])}
-                 script.txt: {Encoding.UTF8.GetString(values.Script ?? [])}
-                 Args: {args}
+                    Hello there! This is shortcut launcher {values.TitleId}
+                    Created with ToolStation PkgMaker
+                    launch.txt: {Encoding.UTF8.GetString(values.Command ?? [])}
+                    script.txt: {Encoding.UTF8.GetString(values.Script ?? [])}
+                    Args: {args}
 
-                 """;
+                    """;
         }
 
         if (hisFile.Equals("NONE", StringComparison.OrdinalIgnoreCase))
@@ -103,9 +112,12 @@ public class MetadataProvider
         return File.ReadAllText(hisFile);
     }
 
-    public byte[]? FormatScript(string? value)
+    public static byte[]? FormatScript(string? value)
     {
-        if (value is null) return null;
+        if (value is null)
+        {
+            return null;
+        }
 
         var pattern = new Regex(@"[\r\n]+");
         var script = pattern.Replace(value.Trim(), "\n") + "\n"; // trailing newline is required
@@ -113,36 +125,46 @@ public class MetadataProvider
         return Encoding.UTF8.GetBytes(script);
     }
 
-    public string FormatTitle(string? value)
+    public static string FormatTitle(string? value)
     {
-        if (value is null) throw new ArgumentException("Title is not set. Specify with -t or use -b to autodetect");
+        if (value is null)
+        {
+            throw new ArgumentException("Title is not set. Specify with -t or use -b to autodetect");
+        }
 
         var pattern = new Regex(@"[\r\n]+");
         var title = pattern.Replace(value.Trim(), "\n");
-        if (title.Length > 127 || title.Count('\n') > 2) throw new ArgumentException($"Title must have length <= 127 and no more than 2 newlines, got [{title}]");
+        if (title.Length > 127 || title.Count('\n') > 2)
+        {
+            throw new ArgumentException($"Title must have length <= 127 and no more than 2 newlines, got [{title}]");
+        }
 
         return title;
     }
 
-    public string? FormatTitleId(string? value)
+    public static string? FormatTitleId(string? value)
     {
-        if (value is null) return null;
+        if (value is null)
+        {
+            return null;
+        }
 
         var titleId = value.Trim().ToUpperInvariant();
-        var pattern = new Regex(@"[^A-Z0-9]");
-        if (titleId.Length != 9 || pattern.Match(titleId).Success) throw new ArgumentException($"TitleId must have length = 9 and have only [A-Z0-9] characters, got [{titleId}]");
+        if (titleId.Length != 9 || AllowedChars.IsMatch(titleId))
+        {
+            throw new ArgumentException($"TitleId must have length = 9 and have only [A-Z0-9] characters, got [{titleId}]");
+        }
 
         return titleId;
     }
 
-    public string FormatLabel(string value)
+    public static string FormatLabel(string value)
     {
-        var pattern = new Regex(@"[^A-Z0-9]");
-        var label = pattern.Replace(value.Trim().ToUpperInvariant(), "");
+        var label = AllowedChars.Replace(value.Trim().ToUpperInvariant(), "");
         return label.PadRight(16, '0')[..16];
     }
 
-    public async Task<byte[]?> ReadFileOrFallback(string? file, byte[]? fallback, CancellationToken token)
+    public static async Task<byte[]?> ReadFileOrFallback(string? file, byte[]? fallback, CancellationToken token)
     {
         if (string.IsNullOrWhiteSpace(file))
         {
@@ -159,43 +181,51 @@ public class MetadataProvider
         return await File.ReadAllBytesAsync(file, token);
     }
 
-    public string FormatContentId(Values values)
-    {
-        return $"LAUNCH-{values.TitleId}_00-{values.Label}";
-    }
+    public static string FormatLaunchContentId(Values values) => $"LAUNCH-{values.TitleId}_00-{values.Label}";
 
-    private string GetDefaultScript(string appId, string gameId, int timeout)
-    {
-        return $"""
-                /mount.ps3/unmount
-                /mount.ps3?{gameId}
-                wait /dev_bdvd
-                if exist /dev_bdvd
-                    # sometimes autoplay breaks, eg when there are notifications like low controller battery. trying to mitigate with wait
-                    wait {timeout}
-                    # for some reason simple /play.ps3 didnt work for me
-                    /play.ps3?col=game&seg=seg_device
-                else
-                    beep2
-                    /popup.ps3$Launch%20script%20{appId}%20failed%0AFound%20zero%20or%20multiple%20games%20with%20%22{gameId}%22%20in%20name.%20Check%20your%20files%20or%20rebuild%20this%20launcher.%20This%20notification%20will%20close%20in%2015s...&icon=23
-                    wait 15
-                    /popup.ps3*
-                end if
-
-                """;
-    }
-
-    public const char Prefix = 'W';
-
-    public byte[]? FormatParamHis(string? history, DateTimeOffset now)
+    public static byte[]? FormatParamHis(string? history, DateTimeOffset now)
     {
         if (history is null)
         {
             return null;
         }
+
         //Main.Log($"PARAM.HIS {history}");
         var ts = BitConverter.GetBytes(now.ToUnixTimeSeconds());
         Array.Reverse(ts);
         return [1, ..ts, 2, ..Encoding.UTF8.GetBytes(history)];
     }
+
+    private static string GetDefaultScript(string appId, string gameId, int timeout) =>
+        $"""
+         /mount.ps3/unmount
+         /mount.ps3?{gameId}
+         wait /dev_bdvd
+         if exist /dev_bdvd
+             # sometimes autoplay breaks, eg when there are notifications like low controller battery. trying to mitigate with wait
+             wait {timeout}
+             # for some reason simple /play.ps3 didnt work for me
+             /play.ps3?col=game&seg=seg_device
+         else
+             beep2
+             /popup.ps3$Launch%20script%20{appId}%20failed%0AFound%20zero%20or%20multiple%20games%20with%20%22{gameId}%22%20in%20name.%20Check%20your%20files%20or%20rebuild%20this%20launcher.%20This%20notification%20will%20close%20in%2015s...&icon=23
+             wait 15
+             /popup.ps3*
+         end if
+
+         """;
+
+    public static string FormatInstallContentId(string value)
+    {
+        var text = AllowedChars.Replace(value.Trim().ToUpperInvariant(), "");
+        const int length = 6 + 9 + 16;
+        var x = text.PadRight(length, '0')[..length];
+        var result = $"{x[..6]}-{x[6..15]}_00-{x[15..]}";
+        //Main.Log(result);
+        return result;
+    }
+
+    private static readonly Regex AllowedChars = new Regex(@"[^A-Z0-9]");
+
+    public const char Prefix = 'W';
 }

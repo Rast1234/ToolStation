@@ -1,5 +1,8 @@
-namespace PkgMaker.Models.Pkg.Enums;
+using System.Diagnostics.CodeAnalysis;
 
+namespace ToolStation.Ps3Formats.Pkg.Enums;
+
+[SuppressMessage("Design", "CA1028:Enum Storage should be Int32", Justification = "Binary packable")]
 [Flags]
 public enum PkgFileFlags : uint
 {

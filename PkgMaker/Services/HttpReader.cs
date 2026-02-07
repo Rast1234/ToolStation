@@ -6,7 +6,7 @@ using PkgMaker.Utils;
 
 namespace PkgMaker.Services;
 
-public class HttpReader
+internal sealed class HttpReader
 {
     public async Task Parse(Uri uri, Values values, CancellationToken token)
     {
@@ -20,10 +20,7 @@ public class HttpReader
 
         if (FileUtils.IsIso(path) && contentType.Contains("octet-stream", StringComparison.OrdinalIgnoreCase))
         {
-            Stream Factory()
-            {
-                return client.GetStreamAsync(uri, token).Result;
-            }
+            Stream Factory() => client.GetStreamAsync(uri, token).Result;
 
             await using var wrapper = new IsoWorkaroundStream(Factory);
             await FileUtils.ReadIso(wrapper, values, path, token);
@@ -35,10 +32,7 @@ public class HttpReader
             // screw html parsing, just probe and expect 404
             var game = Path.Join(path, "PS3_GAME");
 
-            Uri FileAddr(string x)
-            {
-                return FileUtils.ReplacePath(uri, game, x);
-            }
+            Uri FileAddr(string x) => FileUtils.ReplacePath(uri, game, x);
 
             var sfo = await FileUtils.ReadSfoFile(await ReadFile(client, FileAddr("PARAM.SFO"), token));
             values.Title = sfo?.Data.GetValueOrDefault("TITLE")?.Value as string;
@@ -53,41 +47,54 @@ public class HttpReader
         }
     }
 
-    public async Task<IReadOnlyList<string>> List(Uri uri, bool recursive, TimeSpan throttle, CancellationToken token)
+    public static async Task<IReadOnlyList<string>> List(Uri uri, bool recursive, TimeSpan throttle, CancellationToken token)
     {
         using var client = InitClient();
         var result = await ProcessItem(client, uri, recursive, throttle, token);
         return result.ToList();
     }
 
-    private async Task<byte[]?> ReadFile(HttpClient client, Uri? uri, CancellationToken token)
+    private static async Task<byte[]?> ReadFile(HttpClient client, Uri? uri, CancellationToken token)
     {
         var response = await client.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, token);
-        if (response.StatusCode == HttpStatusCode.NotFound) return null;
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
 
         response.EnsureSuccessStatusCode();
         var contentType = response.Content.Headers.ContentType?.MediaType ?? "";
-        if (contentType.Contains("html", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException($"Unexpected content-type for file: {contentType}");
+        if (contentType.Contains("html", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException($"Unexpected content-type for file: {contentType}");
+        }
 
         return await response.Content.ReadAsByteArrayAsync(token);
     }
 
-    private bool IsGameFolder(IEnumerable<string> entries)
-    {
-        return entries.Any(x => x == "PS3_GAME");
-    }
+    private static bool IsGameFolder(IEnumerable<string> entries) => entries.Any(x => x == "PS3_GAME");
 
-    private async Task<IEnumerable<string>> ProcessItem(HttpClient client, Uri item, bool recursive, TimeSpan throttle, CancellationToken token)
+    private static async Task<IEnumerable<string>> ProcessItem(HttpClient client, Uri item, bool recursive, TimeSpan throttle, CancellationToken token)
     {
         var path = FileUtils.GetSanePath(item);
         Main.Log($"Probing [{path}]");
-        if (FileUtils.IsBlacklisted(path)) return [];
-        if (FileUtils.IsIso(item.ToString())) return [item.ToString()];
+        if (FileUtils.IsBlacklisted(path))
+        {
+            return [];
+        }
+
+        if (FileUtils.IsIso(item.ToString()))
+        {
+            return [item.ToString()];
+        }
 
         var entries = await ReadDir(client, item, throttle, token);
         if (entries != null)
         {
-            if (IsGameFolder(entries)) return [item.ToString()];
+            if (IsGameFolder(entries))
+            {
+                return [item.ToString()];
+            }
 
             var result = new List<string>();
             var urls = entries.Select(x => FileUtils.ReplacePath(item, item.AbsolutePath, x));
@@ -114,25 +121,27 @@ public class HttpReader
     /// Entries if directory, null if file
     /// </summary>
     /// <returns></returns>
-    private async Task<IReadOnlyList<string>?> ReadDir(HttpClient client, Uri uri, TimeSpan throttle, CancellationToken token)
+    private static async Task<IReadOnlyList<string>?> ReadDir(HttpClient client, Uri uri, TimeSpan throttle, CancellationToken token)
     {
         await Task.Delay(throttle, token);
         using var response = await client.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, token);
         if (response.StatusCode == HttpStatusCode.BadRequest)
             // let's pretend it's never happened. for example app_home returns this
+        {
             return null;
+        }
+
         response.EnsureSuccessStatusCode();
         var contentType = response.Content.Headers.ContentType?.MediaType ?? "";
-        if (!contentType.Contains("html", StringComparison.OrdinalIgnoreCase)) return null;
+        if (!contentType.Contains("html", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
 
         await using var content = await response.Content.ReadAsStreamAsync(token);
         var context = BrowsingContext.New(Configuration.Default);
         var document = await context.OpenAsync(req => req.Content(content), token);
-        return document
-            .QuerySelectorAll("table#files tr td:first-of-type a")
-            .Select(x => x.Text().Trim())
-            .Where(x => x != "..")
-            .ToList();
+        return document.QuerySelectorAll("table#files tr td:first-of-type a").Select(x => x.Text().Trim()).Where(x => x != "..").ToList();
     }
 
     private static HttpClient InitClient()

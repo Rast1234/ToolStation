@@ -2,11 +2,11 @@ using System.Collections.Immutable;
 using DiscUtils.Iso9660;
 using FluentFTP;
 using PkgMaker.Models;
-using PkgMaker.Models.Sfo;
+using ToolStation.Ps3Formats.Sfo;
 
 namespace PkgMaker.Utils;
 
-public static class FileUtils
+internal static class FileUtils
 {
     public static Uri ReplacePath(Uri from, string path, string entry)
     {
@@ -14,34 +14,22 @@ public static class FileUtils
         return new Uri(baseAddr, Path.Join(path, entry));
     }
 
-    public static bool HasGameSfo(DirectoryInfo d)
-    {
-        return d.EnumerateDirectories("PS3_GAME").SingleOrDefault()?.EnumerateFiles("PARAM.SFO").SingleOrDefault() != null;
-    }
+    public static bool HasGameSfo(DirectoryInfo d) => d.EnumerateDirectories("PS3_GAME").SingleOrDefault()?.EnumerateFiles("PARAM.SFO").SingleOrDefault() != null;
 
-    public static string GetSanePath(Uri uri)
-    {
-        return "/" + Uri.UnescapeDataString(uri.AbsolutePath.Replace('+', ' ')).Trim('/', '\\');
-    }
+    public static string GetSanePath(Uri uri) => "/" + Uri.UnescapeDataString(uri.AbsolutePath.Replace('+', ' ')).Trim('/', '\\');
 
-    public static bool IsIso(string name)
-    {
-        return Path.GetExtension(name).Equals(".iso", StringComparison.OrdinalIgnoreCase);
-    }
+    public static bool IsIso(string name) => Path.GetExtension(name).Equals(".iso", StringComparison.OrdinalIgnoreCase);
 
-    public static bool IsGameFolder(DirectoryInfo dir)
-    {
-        return dir.GetDirectories().SingleOrDefault(x => x.Name == "PS3_GAME") != null;
-    }
+    public static bool IsGameFolder(DirectoryInfo dir) => dir.GetDirectories().SingleOrDefault(x => x.Name == "PS3_GAME") != null;
 
-    public static bool IsIso(FtpListItem item)
-    {
-        return item.Type == FtpObjectType.File && Path.GetExtension(item.Name).Equals(".iso", StringComparison.OrdinalIgnoreCase);
-    }
+    public static bool IsIso(FtpListItem item) => item.Type == FtpObjectType.File && Path.GetExtension(item.Name).Equals(".iso", StringComparison.OrdinalIgnoreCase);
 
     public static async Task<ParamSfo?> ReadSfoFile(byte[]? data)
     {
-        if (data is null) return null;
+        if (data is null)
+        {
+            return null;
+        }
 
         await using var ms = new MemoryStream(data);
         return ParamSfo.Read(ms);
@@ -49,8 +37,7 @@ public static class FileUtils
 
     public static async Task ReadIso(Stream s, Values values, string isoPath, CancellationToken token)
     {
-        // using DiscUtils fork that is probably aot compatible
-        var iso = new CDReader(s, true);
+        using var iso = new CDReader(s, true);
         var sfo = await ReadSfoFile(ReadIsoFile("\\PS3_GAME\\PARAM.SFO"));
         values.Title = sfo?.Data.GetValueOrDefault("TITLE")?.Value as string;
         values.Game = sfo?.Data.GetValueOrDefault("TITLE_ID")?.Value as string ?? Path.GetFileNameWithoutExtension(isoPath);
@@ -62,10 +49,9 @@ public static class FileUtils
         values.Sound = ReadIsoFile("\\PS3_GAME\\SND0.AT3");
 
         // TODO: PSP .ISO -  as sfo and png, could be supported but need docs on media files there
-        byte[]? ReadIsoFile(string path)
-        {
-            return iso.FileExists(path) ? iso.ReadAllBytes(path) : null;
-        }
+        byte[]? ReadIsoFile(string path) => iso.FileExists(path)
+            ? iso.ReadAllBytes(path)
+            : null;
     }
 
     /// <summary>
@@ -73,7 +59,11 @@ public static class FileUtils
     /// </summary>
     public static bool IsBlacklisted(string path)
     {
-        if (!path.StartsWith('/')) throw new ArgumentException($"Not absolute path [{path}]");
+        if (!path.StartsWith('/'))
+        {
+            throw new ArgumentException($"Not absolute path [{path}]");
+        }
+
         return BlacklistPathsPrefixes.Any(path.StartsWith);
     }
 

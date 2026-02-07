@@ -1,8 +1,8 @@
-using PkgMaker.Models.Sfo;
+using ToolStation.Ps3Formats.Sfo;
 
 namespace PkgMaker.Models;
 
-public class Values
+internal sealed class Values
 {
     public string? Base { get; set; }
     public DirectoryInfo? Output { get; set; }
@@ -66,46 +66,36 @@ public class Values
     /// </summary>
     public byte[]? ParamHis { get; set; }
 
-    public string ToInitString()
-    {
-        return $"""
-                Initial parameters:
-                    {nameof(Force)}=[{Force}], {nameof(Preview)}=[{Preview}], Script {nameof(Timeout)}=[{Timeout}]
-                    {nameof(Base)}=[{Base}], {nameof(Output)}=[{Str(Output)}]
-                """;
-    }
+    public string ToInitString() =>
+        $"""
+         Initial parameters:
+             {nameof(Force)}=[{Force}], {nameof(Preview)}=[{Preview}], Script {nameof(Timeout)}=[{Timeout}]
+             {nameof(Base)}=[{Base}], {nameof(Output)}=[{Str(Output)}]
+         """;
 
-    public string ToInfoString(string message)
-    {
-        return $"""
-                {message}:
-                    {nameof(Title)} (XMB app name)=[{Title}], {nameof(TitleId)} (install folder)=[{TitleId}], {nameof(Label)}=[{Label}]
-                    {nameof(ContentId)} (package name)=[{ContentId}]
-                    {nameof(Game)} partial filename for webman search=[{Game}]
-                    {nameof(ParamSfo)}=[{Str(ParamSfo)}], {nameof(ParamHis)}=[{Str(ParamHis)}], {nameof(Command)}=[{Str(Command)}], {nameof(Script)}=[{Str(Script)}]
-                    {nameof(Icon)}=[{Str(Icon)}], {nameof(Background)}=[{Str(Background)}], {nameof(Overlay)}=[{Str(Overlay)}]
-                    {nameof(Video)}=[{Str(Video)}], {nameof(Sound)}=[{Str(Sound)}], {nameof(OverlaySd)}=[{Str(OverlaySd)}]
-                """;
-    }
+    public string ToInfoString(string message) =>
+        $"""
+         {message}:
+             {nameof(Title)} (XMB app name)=[{Title}], {nameof(TitleId)} (install folder)=[{TitleId}], {nameof(Label)}=[{Label}]
+             {nameof(ContentId)} (package name)=[{ContentId}]
+             {nameof(Game)} partial filename for webman search=[{Game}]
+             {nameof(ParamSfo)}=[{Str(ParamSfo)}], {nameof(ParamHis)}=[{Str(ParamHis)}], {nameof(Command)}=[{Str(Command)}], {nameof(Script)}=[{Str(Script)}]
+             {nameof(Icon)}=[{Str(Icon)}], {nameof(Background)}=[{Str(Background)}], {nameof(Overlay)}=[{Str(Overlay)}]
+             {nameof(Video)}=[{Str(Video)}], {nameof(Sound)}=[{Str(Sound)}], {nameof(OverlaySd)}=[{Str(OverlaySd)}]
+         """;
 
-    private string Str(byte[]? value)
-    {
-        return value is null
+    private static string Str(byte[]? value) =>
+        value is null
             ? "null"
             : $"{value.Length} bytes";
-    }
 
-    private string Str(ParamSfo? value)
-    {
-        return value is null
+    private static string Str(ParamSfo? value) =>
+        value is null
             ? "null"
             : $"{value.Data.Count} entries";
-    }
 
-    private string Str(FileSystemInfo? value)
-    {
-        return value is null
+    private static string Str(FileSystemInfo? value) =>
+        value is null
             ? "null"
             : value.FullName;
-    }
 }

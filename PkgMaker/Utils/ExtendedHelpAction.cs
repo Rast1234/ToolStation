@@ -4,7 +4,10 @@ using System.CommandLine.Invocation;
 
 namespace PkgMaker.Utils;
 
-internal class ExtendedHelpAction(Func<string, string> exampleProvider) : SynchronousCommandLineAction
+internal sealed class ExtendedHelpAction
+(
+    Func<string, string> exampleProvider
+) : SynchronousCommandLineAction
 {
     public override bool ClearsParseErrors => actualAction.ClearsParseErrors;
     private readonly HelpAction actualAction = new();

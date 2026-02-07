@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace PkgMaker.Utils;
+namespace ToolStation.Ps3Formats.Utils;
 
 public static class StreamExtensions
 {
@@ -9,10 +9,7 @@ public static class StreamExtensions
     /// </summary>
     /// <param name="s"></param>
     /// <returns></returns>
-    public static sbyte ReadInt8(this Stream s)
-    {
-        return unchecked((sbyte) s.ReadUInt8());
-    }
+    public static sbyte ReadInt8(this Stream s) => unchecked((sbyte) s.ReadUInt8());
 
     /// <summary>
     /// Read an unsigned 8-bit integer from the stream.
@@ -33,10 +30,7 @@ public static class StreamExtensions
     /// </summary>
     /// <param name="s"></param>
     /// <returns></returns>
-    public static ushort ReadUInt16LE(this Stream s)
-    {
-        return unchecked((ushort) s.ReadInt16LE());
-    }
+    public static ushort ReadUInt16LE(this Stream s) => unchecked((ushort) s.ReadInt16LE());
 
     /// <summary>
     /// Read a signed 16-bit little-endian integer from the stream.
@@ -57,22 +51,19 @@ public static class StreamExtensions
     /// Write an unsigned 16-bit Little-endian integer to the stream.
     /// </summary>
     /// <param name="s"></param>
-    /// <param name="uint16"></param>
+    /// <param name="value"></param>
     /// <returns></returns>
-    public static void WriteUInt16LE(this Stream s, ushort uint16)
-    {
-        s.WriteInt16LE((short) uint16);
-    }
+    public static void WriteUInt16LE(this Stream s, ushort value) => s.WriteInt16LE((short) value);
 
     /// <summary>
     /// Write a signed 16-bit Little-endian integer to the stream.
     /// </summary>
     /// <param name="s"></param>
-    /// <param name="int16"></param>
+    /// <param name="value"></param>
     /// <returns></returns>
-    public static void WriteInt16LE(this Stream s, short int16)
+    public static void WriteInt16LE(this Stream s, short value)
     {
-        var tmp = BitConverter.GetBytes(int16);
+        var tmp = BitConverter.GetBytes(value);
         s.Write(tmp, 0, 2);
     }
 
@@ -81,10 +72,7 @@ public static class StreamExtensions
     /// </summary>
     /// <param name="s"></param>
     /// <returns></returns>
-    public static ushort ReadUInt16BE(this Stream s)
-    {
-        return unchecked((ushort) s.ReadInt16BE());
-    }
+    public static ushort ReadUInt16BE(this Stream s) => unchecked((ushort) s.ReadInt16BE());
 
     /// <summary>
     /// Read a signed 16-bit Big-endian integer from the stream.
@@ -105,22 +93,19 @@ public static class StreamExtensions
     /// Write an unsigned 16-bit Big-endian integer to the stream.
     /// </summary>
     /// <param name="s"></param>
-    /// <param name="uint16"></param>
+    /// <param name="value"></param>
     /// <returns></returns>
-    public static void WriteUInt16BE(this Stream s, ushort uint16)
-    {
-        s.WriteInt16BE((short) uint16);
-    }
+    public static void WriteUInt16BE(this Stream s, ushort value) => s.WriteInt16BE((short) value);
 
     /// <summary>
     /// Write a signed 16-bit Big-endian integer to the stream.
     /// </summary>
     /// <param name="s"></param>
-    /// <param name="int16"></param>
+    /// <param name="value"></param>
     /// <returns></returns>
-    public static void WriteInt16BE(this Stream s, short int16)
+    public static void WriteInt16BE(this Stream s, short value)
     {
-        var tmp = BitConverter.GetBytes(int16);
+        var tmp = BitConverter.GetBytes(value);
         Array.Reverse(tmp);
         s.Write(tmp, 0, 2);
     }
@@ -154,7 +139,11 @@ public static class StreamExtensions
         ret = tmp[0] & 0x0000FF;
         ret |= (tmp[1] << 8) & 0x00FF00;
         ret |= (tmp[2] << 16) & 0xFF0000;
-        if ((tmp[2] & 0x80) == 0x80) ret |= 0xFF << 24;
+        if ((tmp[2] & 0x80) == 0x80)
+        {
+            ret |= 0xFF << 24;
+        }
+
         return ret;
     }
 
@@ -187,7 +176,11 @@ public static class StreamExtensions
         ret = tmp[2] & 0x0000FF;
         ret |= (tmp[1] << 8) & 0x00FF00;
         ret |= (tmp[0] << 16) & 0xFF0000;
-        if ((tmp[0] & 0x80) == 0x80) ret |= 0xFF << 24; // sign-extend
+        if ((tmp[0] & 0x80) == 0x80)
+        {
+            ret |= 0xFF << 24; // sign-extend
+        }
+
         return ret;
     }
 
@@ -196,10 +189,7 @@ public static class StreamExtensions
     /// </summary>
     /// <param name="s"></param>
     /// <returns></returns>
-    public static uint ReadUInt32LE(this Stream s)
-    {
-        return unchecked((uint) s.ReadInt32LE());
-    }
+    public static uint ReadUInt32LE(this Stream s) => unchecked((uint) s.ReadInt32LE());
 
     /// <summary>
     /// Read a signed 32-bit little-endian integer from the stream.
@@ -222,22 +212,19 @@ public static class StreamExtensions
     /// Write an unsigned 32-bit Little-endian integer to the stream.
     /// </summary>
     /// <param name="s"></param>
-    /// <param name="uint32"></param>
+    /// <param name="value"></param>
     /// <returns></returns>
-    public static void WriteUInt32LE(this Stream s, uint uint32)
-    {
-        s.WriteInt32LE((int) uint32);
-    }
+    public static void WriteUInt32LE(this Stream s, uint value) => s.WriteInt32LE((int) value);
 
     /// <summary>
     /// Write a signed 32-bit Little-endian integer to the stream.
     /// </summary>
     /// <param name="s"></param>
-    /// <param name="int32"></param>
+    /// <param name="value"></param>
     /// <returns></returns>
-    public static void WriteInt32LE(this Stream s, int int32)
+    public static void WriteInt32LE(this Stream s, int value)
     {
-        var tmp = BitConverter.GetBytes(int32);
+        var tmp = BitConverter.GetBytes(value);
         s.Write(tmp, 0, 4);
     }
 
@@ -246,10 +233,7 @@ public static class StreamExtensions
     /// </summary>
     /// <param name="s"></param>
     /// <returns></returns>
-    public static uint ReadUInt32BE(this Stream s)
-    {
-        return unchecked((uint) s.ReadInt32BE());
-    }
+    public static uint ReadUInt32BE(this Stream s) => unchecked((uint) s.ReadInt32BE());
 
     /// <summary>
     /// Read a signed 32-bit Big-endian integer from the stream.
@@ -272,22 +256,19 @@ public static class StreamExtensions
     /// Write an unsigned 32-bit Big-endian integer to the stream.
     /// </summary>
     /// <param name="s"></param>
-    /// <param name="uint32"></param>
+    /// <param name="value"></param>
     /// <returns></returns>
-    public static void WriteUInt32BE(this Stream s, uint uint32)
-    {
-        s.WriteInt32BE((int) uint32);
-    }
+    public static void WriteUInt32BE(this Stream s, uint value) => s.WriteInt32BE((int) value);
 
     /// <summary>
     /// Write a signed 32-bit Big-endian integer to the stream.
     /// </summary>
     /// <param name="s"></param>
-    /// <param name="int32"></param>
+    /// <param name="value"></param>
     /// <returns></returns>
-    public static void WriteInt32BE(this Stream s, int int32)
+    public static void WriteInt32BE(this Stream s, int value)
     {
-        var tmp = BitConverter.GetBytes(int32);
+        var tmp = BitConverter.GetBytes(value);
         Array.Reverse(tmp);
         s.Write(tmp, 0, 4);
     }
@@ -297,10 +278,7 @@ public static class StreamExtensions
     /// </summary>
     /// <param name="s"></param>
     /// <returns></returns>
-    public static ulong ReadUInt64LE(this Stream s)
-    {
-        return unchecked((ulong) s.ReadInt64LE());
-    }
+    public static ulong ReadUInt64LE(this Stream s) => unchecked((ulong) s.ReadInt64LE());
 
     /// <summary>
     /// Read a signed 64-bit little-endian integer from the stream.
@@ -328,22 +306,19 @@ public static class StreamExtensions
     /// Write an unsigned 64-bit Little-endian integer to the stream.
     /// </summary>
     /// <param name="s"></param>
-    /// <param name="uint64"></param>
+    /// <param name="value"></param>
     /// <returns></returns>
-    public static void WriteUInt64LE(this Stream s, ulong uint64)
-    {
-        s.WriteInt64LE((long) uint64);
-    }
+    public static void WriteUInt64LE(this Stream s, ulong value) => s.WriteInt64LE((long) value);
 
     /// <summary>
     /// Write a signed 64-bit Little-endian integer to the stream.
     /// </summary>
     /// <param name="s"></param>
-    /// <param name="int64"></param>
+    /// <param name="value"></param>
     /// <returns></returns>
-    public static void WriteInt64LE(this Stream s, long int64)
+    public static void WriteInt64LE(this Stream s, long value)
     {
-        var tmp = BitConverter.GetBytes(int64);
+        var tmp = BitConverter.GetBytes(value);
         s.Write(tmp, 0, 8);
     }
 
@@ -352,10 +327,7 @@ public static class StreamExtensions
     /// </summary>
     /// <param name="s"></param>
     /// <returns></returns>
-    public static ulong ReadUInt64BE(this Stream s)
-    {
-        return unchecked((ulong) s.ReadInt64BE());
-    }
+    public static ulong ReadUInt64BE(this Stream s) => unchecked((ulong) s.ReadInt64BE());
 
     /// <summary>
     /// Read a signed 64-bit big-endian integer from the stream.
@@ -383,22 +355,19 @@ public static class StreamExtensions
     /// Write an unsigned 64-bit Big-endian integer to the stream.
     /// </summary>
     /// <param name="s"></param>
-    /// <param name="uint64"></param>
+    /// <param name="value"></param>
     /// <returns></returns>
-    public static void WriteUInt64BE(this Stream s, ulong uint64)
-    {
-        s.WriteInt64BE((long) uint64);
-    }
+    public static void WriteUInt64BE(this Stream s, ulong value) => s.WriteInt64BE((long) value);
 
     /// <summary>
     /// Write a signed 64-bit Big-endian integer to the stream.
     /// </summary>
     /// <param name="s"></param>
-    /// <param name="int64"></param>
+    /// <param name="value"></param>
     /// <returns></returns>
-    public static void WriteInt64BE(this Stream s, long int64)
+    public static void WriteInt64BE(this Stream s, long value)
     {
-        var tmp = BitConverter.GetBytes(int64);
+        var tmp = BitConverter.GetBytes(value);
         Array.Reverse(tmp);
         s.Write(tmp, 0, 8);
     }
@@ -411,7 +380,11 @@ public static class StreamExtensions
     /// <returns></returns>
     public static long ReadMultibyteBE(this Stream s, byte bytes)
     {
-        if (bytes > 8) return 0;
+        if (bytes > 8)
+        {
+            return 0;
+        }
+
         long ret = 0;
         var b = s.ReadBytes(bytes);
         for (uint i = 0; i < b.Length; i++)
@@ -444,7 +417,11 @@ public static class StreamExtensions
     {
         var sb = new StringBuilder(255);
         char cur;
-        while ((limit == -1 || sb.Length < limit) && (cur = (char) s.ReadByte()) != 0) sb.Append(cur);
+        while ((limit == -1 || sb.Length < limit) && (cur = (char) s.ReadByte()) != 0)
+        {
+            sb.Append(cur);
+        }
+
         return sb.ToString();
     }
 
@@ -457,7 +434,10 @@ public static class StreamExtensions
     {
         List<byte> buffer = new();
         byte cur;
-        while ((limit == -1 || buffer.Count < limit) && (cur = (byte) s.ReadByte()) != 0) buffer.Add(cur);
+        while ((limit == -1 || buffer.Count < limit) && (cur = (byte) s.ReadByte()) != 0)
+        {
+            buffer.Add(cur);
+        }
 
         return Encoding.UTF8.GetString(buffer.ToArray());
     }
@@ -482,10 +462,7 @@ public static class StreamExtensions
     /// </summary>
     /// <param name="s"></param>
     /// <returns></returns>
-    public static string ReadLengthUTF8(this Stream s)
-    {
-        return s.ReadLengthPrefixedString(Encoding.UTF8);
-    }
+    public static string ReadLengthUTF8(this Stream s) => s.ReadLengthPrefixedString(Encoding.UTF8);
 
     /// <summary>
     /// Read a given number of bytes from a stream into a new byte array.
@@ -496,7 +473,9 @@ public static class StreamExtensions
     public static byte[] ReadBytes(this Stream s, int count)
     {
         // Size of returned array at most count, at least difference between position and length.
-        var realCount = (int) (s.Position + count > s.Length ? s.Length - s.Position : count);
+        var realCount = (int) (s.Position + count > s.Length
+            ? s.Length - s.Position
+            : count);
         var ret = new byte[realCount];
         s.ReadExactly(ret, 0, realCount);
         return ret;
@@ -528,7 +507,9 @@ public static class StreamExtensions
                     b = (byte) s.ReadByte();
                     ret += b & 0x7f;
                     if (0x80 == (b & 0x80))
+                    {
                         throw new InvalidDataException("Variable-length MIDI number > 4 bytes");
+                    }
                 }
             }
         }

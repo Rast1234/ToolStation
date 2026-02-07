@@ -1,7 +1,7 @@
-using PkgMaker.Models.Pkg.Enums;
-using PkgMaker.Utils;
+using ToolStation.Ps3Formats.Pkg.Enums;
+using ToolStation.Ps3Formats.Utils;
 
-namespace PkgMaker.Models.Pkg.Entries;
+namespace ToolStation.Ps3Formats.Pkg.Entries;
 
 public class PkgFile : PkgEntryBase
 {
@@ -26,18 +26,21 @@ public class PkgFile : PkgEntryBase
         Flags = flags ?? PkgFileFlags.Overwrites | PkgFileFlags.Raw;
     }
 
-    private static string GetPath(string path)
-    {
-        return path.Replace('\\', '/').Trim('/');
-    }
+    private static string GetPath(string path) => path.Replace('\\', '/').Trim('/');
 
     private static Stream GetStream(string name, Stream content)
     {
-        if (content.Position != 0) throw new ArgumentException("File content stream must be at position 0");
+        if (content.Position != 0)
+        {
+            throw new ArgumentException("File content stream must be at position 0");
+        }
 
         try
         {
-            if (content.Length == 0) throw new ArgumentException("File content stream must be non-empty");
+            if (content.Length == 0)
+            {
+                throw new ArgumentException("File content stream must be non-empty");
+            }
         }
         catch (NotSupportedException)
         {

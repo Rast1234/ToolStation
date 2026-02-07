@@ -4,7 +4,7 @@ using PkgMaker.Utils;
 
 namespace PkgMaker.Models.Commands;
 
-public class Prepare : Command
+internal sealed class Prepare : Command
 {
     public Prepare() : base(nameof(Prepare).ToLowerInvariant(), Desc)
     {
@@ -13,42 +13,40 @@ public class Prepare : Command
         Options.Add(Recursive);
         Options.Add(Force);
         Options.Add(Throttle);
-        Options.Add(new HelpOption {Action = new ExtendedHelpAction(Examples)});
+        Options.Add(new HelpOption { Action = new ExtendedHelpAction(Examples) });
     }
 
-    private static string Examples(string app)
-    {
-        return $"""
+    private static string Examples(string app) =>
+        $"""
 
-                Examples:
+         Examples:
 
-                  Remote PS3ISO
-                  > {app} prepare -s 'ftp://192.168.0.3/dev_hdd0/PS3ISO'
-                    For every ISO, script will have a line to build launcher pkg using remote ISO as base 
-                    
-                  Remote folders
-                  > {app} prepare -s 'http://192.168.0.3/dev_hdd0/GAMES'
-                    Same for every game folder
-                  
-                  Local games
-                  > {app} prepare -s 'path/to/backups/' -r
-                    Scan for ISOs or game folders recursively
-                  
-                  Remote everything
-                  > {app} prepare -s 'ftp://192.168.0.3' -r
-                    Scan for ISOs or game folders everywhere on remote system
-                    
-                Notes:
-                  * Idea is to scan for existing games, use them as base (titles, icons, etc), then manually review and customize script before making packages
-                  * For PS1/PS2/PSP ISOs you have edit script and add title (-t) manually, or making launcher will fail
-                  * Other formats mountable by Webman (ROMS, .BIN/.CUE, etc) are not supported yet. Create Github issue if you can help with testing
-                  * Some folders are blacklisted from search over FTP and HTTP to avoid wasting time, eg /dev_blind or /dev_hdd0/game
+           Remote PS3ISO
+           > {app} prepare -s "ftp://192.168.0.3/dev_hdd0/PS3ISO"
+             For every ISO, script will have a line to build launcher pkg using remote ISO as base
 
-                """;
-    }
+           Remote folders
+           > {app} prepare -s "http://192.168.0.3/dev_hdd0/GAMES"
+             Same for every game folder
+
+           Local games
+           > {app} prepare -s "path/to/backups/" -r
+             Scan for ISOs or game folders recursively
+
+           Remote everything
+           > {app} prepare -s "ftp://192.168.0.3" -r
+             Scan for ISOs or game folders everywhere on remote system
+
+         Notes:
+           * Idea is to scan for existing games, use them as base (titles, icons, etc), then manually review and customize script before making packages
+           * For PS1/PS2/PSP ISOs you have edit script and add title (-t) manually, or making launcher will fail
+           * Other formats mountable by Webman (ROMS, .BIN/.CUE, etc) are not supported yet. Create Github issue if you can help with testing
+           * Some folders are blacklisted from search over FTP and HTTP to avoid wasting time, eg /dev_blind or /dev_hdd0/game
+
+         """;
 
     private const string Desc = """
-                                Generate sh/ps1 script to make pkgs for every game found in given folder
+                                Generate script to make launcher pkgs for every located game
                                 """;
 
     public static readonly Option<string> Source = new("--source", "-s")
@@ -64,15 +62,9 @@ public class Prepare : Command
         HelpName = "name"
     };
 
-    public static readonly Option<bool> Recursive = new("--recursive", "-r")
-    {
-        Description = "Include nested directories"
-    };
+    public static readonly Option<bool> Recursive = new("--recursive", "-r") { Description = "Include nested directories" };
 
-    public static readonly Option<bool> Force = new("--force", "-f")
-    {
-        Description = "Overwrite existing file"
-    };
+    public static readonly Option<bool> Force = new("--force", "-f") { Description = "Overwrite existing file" };
 
     public static readonly Option<double?> Throttle = new("--throttle", "-t")
     {

@@ -1,10 +1,10 @@
 ﻿using PkgMaker.Services;
 
-var cts = new CancellationTokenSource();
-Console.CancelKeyPress += (s, e) =>
+using var cts = new CancellationTokenSource();
+Console.CancelKeyPress += (_, e) =>
 {
     Main.Log("Canceled!");
     cts.Cancel();
     e.Cancel = true;
 };
-await new Main().Run(args, cts.Token);
+await Main.Run(args, cts.Token);

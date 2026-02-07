@@ -5,7 +5,7 @@ using PkgMaker.Utils;
 
 namespace PkgMaker.Models.Commands;
 
-public class Launcher : Command
+internal sealed class Launcher : Command
 {
     public Launcher() : base(nameof(Launcher).ToLowerInvariant(), Desc)
     {
@@ -28,43 +28,41 @@ public class Launcher : Command
         Options.Add(Preview);
         Options.Add(Output);
         Options.Add(Force);
-        Options.Add(new HelpOption {Action = new ExtendedHelpAction(Examples)});
+        Options.Add(new HelpOption { Action = new ExtendedHelpAction(Examples) });
     }
 
-    private static string Examples(string app)
-    {
-        return $"""
+    private static string Examples(string app) =>
+        $"""
 
-                Examples:
+         Examples:
 
-                  Simple shortcut
-                  > {app} launcher -t "My launcher" -g "overkill" -icon "my icon.png" -p
-                    Specify app title, game to launch, set icon, generate preview. Webman will search for iso or folder with "overkill" in its name, and launch if found only 1 game
-                    
-                  Using base game
-                  > {app} launcher -b "JD4 BLUS31033.iso"
-                    With ISO as base, copy its pictures. Set launcher title "Just Dance 4", and game to launch "BLUS31033" - both read from PARAM.SFO 
-                    
-                  Using base game with overrides
-                  > {app} launcher -b "backups/JustDanceMod2020v2" --background "" -g "JustDanceMod"
-                    With folder as base, copy pictures but remove background. Set launcher title "Just dance 2020" from PARAM.SFO. Customize game name to launch - beacuse game file/folder is named differently and default search by title_id will fail
-                  
-                  Using custom base
-                  > {app} launcher -b "folder/with/stuff" -t "my title" -g "my game"
-                    With folder as base, copy pictures. There is no PARAM.SFO, so set launcher title and game name to launch
+           Simple shortcut
+           > {app} launcher -t "My launcher" -g "overkill" -icon "my icon.png" -p
+             Specify app title, game to launch, set icon, generate preview. Webman will search for iso or folder with "overkill" in its name, and launch if found only 1 game
 
-                  Web command
-                  > {app} launcher -t $'beep beep!\nwait\nbeep beep!' -l BEEPEREXAMPLE000 -c "/beep.ps3?2;/wait.ps3?1;/beep.ps3?2" -s ""
-                    Specify multiline app title (bash syntax), label, custom Webman command, and exclude script file because we won't need it anyway
+           Using base game
+           > {app} launcher -b "JD4 BLUS31033.iso"
+             With ISO as base, copy its pictures. Set launcher title "Just Dance 4", and game to launch "BLUS31033" - both read from PARAM.SFO
 
-                Debugging:
-                  * Check if Webman is OK, launcher relies on its web commands
-                  * Launcher files are in /dev_hdd0/game/Wxxxxxxxx/USRDIR
-                  * launch.txt has HTTP command for Webman, try it in browser manually
-                  * script.txt is a Webman bat that is called from HTTP command. Try executing it yourself, inserting beep1/beep2 between lines to see where it fails
-                  * "Update History" in XMB has launch and script contents for reference
-                """;
-    }
+           Using base game with overrides
+           > {app} launcher -b "backups/JustDanceMod2020v2" --background "" -g "JustDanceMod"
+             With folder as base, copy pictures but remove background. Set launcher title "Just dance 2020" from PARAM.SFO. Customize game name to launch - beacuse game file/folder is named differently and default search by title_id will fail
+
+           Using custom base
+           > {app} launcher -b "folder/with/stuff" -t "my title" -g "my game"
+             With folder as base, copy pictures. There is no PARAM.SFO, so set launcher title and game name to launch
+
+           Web command
+           > {app} launcher -t $'beep beep!\nwait\nbeep beep!' -l BEEPEREXAMPLE000 -c "/beep.ps3?2;/wait.ps3?1;/beep.ps3?2" -s ""
+             Specify multiline app title (bash syntax), label, custom Webman command, and exclude script file because we won't need it anyway
+
+         Debugging:
+           * Check if Webman is OK, launcher relies on its web commands
+           * Launcher files are in /dev_hdd0/game/Wxxxxxxxx/USRDIR
+           * launch.txt has HTTP command for Webman, try it in browser manually
+           * script.txt is a Webman bat that is called from HTTP command. Try executing it yourself, inserting beep1/beep2 between lines to see where it fails
+           * "Update History" in XMB has launch and script contents for reference
+         """;
 
     private const string Desc = """
                                 Generate customizable .pkg to launch specified game
@@ -83,10 +81,7 @@ public class Launcher : Command
         HelpName = "dir"
     };
 
-    public static readonly Option<bool> Force = new("--force", "-f")
-    {
-        Description = "Overwrite existing files"
-    };
+    public static readonly Option<bool> Force = new("--force", "-f") { Description = "Overwrite existing files" };
 
     public static readonly Option<string> Title = new("--title", "-t")
     {
@@ -178,8 +173,5 @@ public class Launcher : Command
         HelpName = "PARAM.SFO"
     };
 
-    public static readonly Option<bool> Preview = new("--preview", "-p")
-    {
-        Description = "Generate preview how icon, background and overlay pictures will look in XMB. Image is saved next to pkg"
-    };
+    public static readonly Option<bool> Preview = new("--preview", "-p") { Description = "Generate preview how icon, background and overlay pictures will look in XMB. Image is saved next to pkg" };
 }

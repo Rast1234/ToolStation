@@ -1,7 +1,7 @@
-using PkgMaker.Models.Pkg.Enums;
-using PkgMaker.Utils;
+using ToolStation.Ps3Formats.Pkg.Enums;
+using ToolStation.Ps3Formats.Utils;
 
-namespace PkgMaker.Models.Pkg.Entries;
+namespace ToolStation.Ps3Formats.Pkg.Entries;
 
 public abstract class PkgEntryBase : IPkgEntry
 {

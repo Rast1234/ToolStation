@@ -1,7 +1,9 @@
-using PkgMaker.Utils;
+using System.Diagnostics.CodeAnalysis;
+using ToolStation.Ps3Formats.Utils;
 
-namespace PkgMaker.Models.Pkg;
+namespace ToolStation.Ps3Formats.Pkg;
 
+[SuppressMessage("Performance", "CA1805:Do not initialize unnecessarily", Justification = "For clarity")]
 public class FileHeader : IPackable
 {
     public uint NameOffset;
@@ -10,7 +12,7 @@ public class FileHeader : IPackable
 
     public ulong DataSize;
     public uint Flags;
-    public uint Padding;
+    public uint Padding = 0;
 
     public byte[] Pack()
     {

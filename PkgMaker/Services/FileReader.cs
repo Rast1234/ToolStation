@@ -3,9 +3,9 @@ using PkgMaker.Utils;
 
 namespace PkgMaker.Services;
 
-public class FileReader
+internal sealed class FileReader
 {
-    public async Task ReadGameFolder(DirectoryInfo d, Values values, CancellationToken token)
+    public static async Task ReadGameFolder(DirectoryInfo d, Values values, CancellationToken token)
     {
         var game = d.EnumerateDirectories("PS3_GAME").Single().GetFiles().ToDictionary(x => x.Name);
         var sfo = await FileUtils.ReadSfoFile(await ReadFile(game.GetValueOrDefault("PARAM.SFO"), token));
@@ -19,7 +19,7 @@ public class FileReader
         values.Sound = await ReadFile(game.GetValueOrDefault("SND0.AT3"), token);
     }
 
-    public async Task ReadPlainFolder(DirectoryInfo d, Values values, CancellationToken token)
+    public static async Task ReadPlainFolder(DirectoryInfo d, Values values, CancellationToken token)
     {
         var files = d.GetFiles().ToDictionary(x => x.Name);
         var sfo = await FileUtils.ReadSfoFile(await ReadFile(files.GetValueOrDefault("PARAM.SFO"), token));
@@ -33,15 +33,21 @@ public class FileReader
         values.Sound = await ReadFile(files.GetValueOrDefault("SND0.AT3"), token);
     }
 
-    public IEnumerable<FileSystemInfo> List(FileSystemInfo entry, bool recursive, CancellationToken token)
+    public static IEnumerable<FileSystemInfo> List(FileSystemInfo entry, bool recursive, CancellationToken token)
     {
         token.ThrowIfCancellationRequested();
         Main.Log($"Probing [{entry.FullName}]");
-        if (entry is FileInfo && FileUtils.IsIso(entry.Name)) return [entry];
+        if (entry is FileInfo && FileUtils.IsIso(entry.Name))
+        {
+            return [entry];
+        }
 
         if (entry is DirectoryInfo d)
         {
-            if (FileUtils.IsGameFolder(d)) return [d];
+            if (FileUtils.IsGameFolder(d))
+            {
+                return [d];
+            }
 
             var result = new List<FileSystemInfo>();
             var contents = d.EnumerateFileSystemInfos();
@@ -63,8 +69,7 @@ public class FileReader
         return [];
     }
 
-    private async Task<byte[]?> ReadFile(FileInfo? f, CancellationToken token)
-    {
-        return f is null ? null : await File.ReadAllBytesAsync(f.FullName, token);
-    }
+    private static async Task<byte[]?> ReadFile(FileInfo? f, CancellationToken token) => f is null
+        ? null
+        : await File.ReadAllBytesAsync(f.FullName, token);
 }

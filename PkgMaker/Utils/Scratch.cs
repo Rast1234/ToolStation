@@ -1,27 +1,30 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
 using PkgMaker.Models;
-using PkgMaker.Models.Pkg;
-using PkgMaker.Models.Pkg.Entries;
-using PkgMaker.Models.Pkg.Enums;
-using PkgMaker.Models.Sfo;
 using PkgMaker.Services;
+using ToolStation.Ps3Formats.Pkg;
+using ToolStation.Ps3Formats.Pkg.Entries;
+using ToolStation.Ps3Formats.Pkg.Enums;
+using ToolStation.Ps3Formats.Sfo;
 
 namespace PkgMaker.Utils;
 
 /// <summary>
 /// Various unused methods that were used for debugging or could be useful later
 /// </summary>
-public static class Scratch
+[SuppressMessage("Security", "CA5350:Do Not Use Weak Cryptographic Algorithms", Justification = "Not doing any security lol")]
+[SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "This is debug stuff")]
+[SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This is debug stuff")]
+internal static class Scratch
 {
     public static void PrintSfo(string path)
     {
-        var s = ParamSfo.Read(File.OpenRead(path));
-        foreach (var x in s.Data.Values)
-        {
-            var type = x.Value is int ? "int" : "str";
-            Main.Log($"{type} {x.Name} [{x.Length}/{x.MaxLength}] [{x.Value}]");
-        }
+        using var r = File.OpenRead(path);
+        var s = ParamSfo.Read(r);
+        Main.Log(path);
+        Main.Log(s);
+        Main.Log("==================================\n");
     }
 
     public static async Task DebugPkgWrite(CancellationToken token)
@@ -33,7 +36,7 @@ public static class Scratch
         var pkg = new PkgBuilder
         {
             ContentId = "CUSTOM-INSTALLER_00-0000000000000000",
-            UseDangerousAbsolutePath = false
+            ForceAbsolutePaths = false
         };
         pkg.AddFile(new PkgFile("USRDIR/EBOOT.BIN", new MemoryStream(bin), PkgFileFlags.Overwrites | PkgFileFlags.Npdrm));
         pkg.AddFile(new PkgFile("ICON0.PNG", new MemoryStream(ico)));
@@ -50,7 +53,7 @@ public static class Scratch
         var pkg = new PkgBuilder
         {
             ContentId = "CUSTOM-INSTALLER_00-0000000000000000",
-            UseDangerousAbsolutePath = true,
+            ForceAbsolutePaths = true,
             ContentType = PkgContentType.Theme
         };
         pkg.AddFile(new PkgFile("/dev_hdd0/tmp/test.txt", new MemoryStream(txt)));
@@ -73,7 +76,7 @@ public static class Scratch
     {
         //await Scratch.DebugPkgAbsPath(token); return;
 
-        var sha1 = IncrementalHash.CreateHash(HashAlgorithmName.SHA1);
+        using var sha1 = IncrementalHash.CreateHash(HashAlgorithmName.SHA1);
         Log("init", sha1.GetCurrentHash());
         sha1.AppendData("lorem ipsum dolor sit amet"u8);
         Log("updt", sha1.GetCurrentHash());
@@ -81,14 +84,20 @@ public static class Scratch
         var sha2 = SHA1.HashData("lorem ipsum dolor sit amet"u8);
         Log("drct", sha2);
 
-        var ms = new MemoryStream(new byte[] {0, 1, 2, 3, 4});
+        var ms = new MemoryStream(new byte[]
+        {
+            0,
+            1,
+            2,
+            3,
+            4
+        });
         Log($"init, pos {ms.Position}", ms.ToArray());
         var tmp = new byte[10];
         ms.ReadExactly(tmp.AsSpan(new Range(0, 2)));
         Log($"read 2, pos {ms.Position}", tmp);
         ms.ReadExactly(tmp.AsSpan(new Range(0, 2)));
         Log($"read 2, pos {ms.Position}", tmp);
-
 
         Console.WriteLine($"{0x8000000}");
         Console.WriteLine($"{0x8000000u}");
@@ -116,8 +125,5 @@ public static class Scratch
         Console.WriteLine($"{message} [{join}] ({value.Count})");
     }
 
-    private static IEnumerable<string> Foo()
-    {
-        return [];
-    }
+    private static IEnumerable<string> Foo() => [];
 }

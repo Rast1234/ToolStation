@@ -5,7 +5,7 @@ using PkgMaker.Utils;
 
 namespace PkgMaker.Services;
 
-public class FtpReader
+internal sealed class FtpReader
 {
     public async Task Parse(Uri uri, Values values, CancellationToken token)
     {
@@ -15,10 +15,7 @@ public class FtpReader
 
         if (FileUtils.IsIso(path) && await client.FileExists(path, token))
         {
-            Stream Factory(long x)
-            {
-                return client.OpenRead(path, restart: x, token: token).Result;
-            }
+            Stream Factory(long x) => client.OpenRead(path, restart: x, token: token).Result;
 
             await using var wrapper = new IsoWorkaroundStream(Factory);
             await FileUtils.ReadIso(wrapper, values, path, token);
@@ -42,52 +39,68 @@ public class FtpReader
         }
     }
 
-    public async Task<IReadOnlyList<string>> List(Uri uri, bool recursive, TimeSpan throttle, CancellationToken token)
+    public static async Task<IReadOnlyList<string>> List(Uri uri, bool recursive, TimeSpan throttle, CancellationToken token)
     {
         await using var client = InitClient(uri);
         await client.AutoConnect(token);
         var path = FileUtils.GetSanePath(uri);
         var startItem = await InitFirst(client, path, throttle, token);
         var paths = await ProcessItem(client, startItem, recursive, throttle, token);
-        return paths
-            .Select(x => FileUtils.ReplacePath(uri, x, string.Empty).ToString())
-            .ToList();
+        return paths.Select(x => FileUtils.ReplacePath(uri, x, string.Empty).ToString()).ToList();
     }
 
-    private async Task<byte[]?> ReadFile(AsyncFtpClient client, string? f, CancellationToken token)
-    {
-        return f is null ? null : await client.DownloadBytes(f, token);
-    }
+    private static async Task<byte[]?> ReadFile(AsyncFtpClient client, string? f, CancellationToken token) => f is null
+        ? null
+        : await client.DownloadBytes(f, token);
 
-    private async Task<bool> IsGameFolder(AsyncFtpClient client, FtpListItem path, TimeSpan throttle, CancellationToken token)
+    private static async Task<bool> IsGameFolder(AsyncFtpClient client, FtpListItem path, TimeSpan throttle, CancellationToken token)
     {
-        if (path.Type != FtpObjectType.Directory) return false;
+        if (path.Type != FtpObjectType.Directory)
+        {
+            return false;
+        }
 
         await Task.Delay(throttle, token);
         var entries = await client.GetListing(path.FullName, token);
         return entries.Any(x => x.Type == FtpObjectType.Directory && x.Name == "PS3_GAME");
     }
 
-    private async Task<FtpListItem> InitFirst(AsyncFtpClient client, string path, TimeSpan throttle, CancellationToken token)
+    private static async Task<FtpListItem> InitFirst(AsyncFtpClient client, string path, TimeSpan throttle, CancellationToken token)
     {
         await Task.Delay(throttle, token);
-        if (await client.DirectoryExists(path, token)) return new FtpListItem(Path.GetFileName(path), 0, FtpObjectType.Directory, DateTime.MinValue) {FullName = path};
+        if (await client.DirectoryExists(path, token))
+        {
+            return new FtpListItem(Path.GetFileName(path), 0, FtpObjectType.Directory, DateTime.MinValue) { FullName = path };
+        }
 
         await Task.Delay(throttle, token);
-        if (await client.FileExists(path, token)) return new FtpListItem(Path.GetFileName(path), 0, FtpObjectType.File, DateTime.MinValue) {FullName = path};
+        if (await client.FileExists(path, token))
+        {
+            return new FtpListItem(Path.GetFileName(path), 0, FtpObjectType.File, DateTime.MinValue) { FullName = path };
+        }
 
         throw new InvalidOperationException($"Failed to get ftp file or directory [{path}]");
     }
 
-    private async Task<IEnumerable<string>> ProcessItem(AsyncFtpClient client, FtpListItem ftpItem, bool recursive, TimeSpan throttle, CancellationToken token)
+    private static async Task<IEnumerable<string>> ProcessItem(AsyncFtpClient client, FtpListItem ftpItem, bool recursive, TimeSpan throttle, CancellationToken token)
     {
         Main.Log($"Probing [{ftpItem.FullName}]");
-        if (FileUtils.IsBlacklisted(ftpItem.FullName)) return [];
-        if (FileUtils.IsIso(ftpItem)) return [ftpItem.FullName];
+        if (FileUtils.IsBlacklisted(ftpItem.FullName))
+        {
+            return [];
+        }
+
+        if (FileUtils.IsIso(ftpItem))
+        {
+            return [ftpItem.FullName];
+        }
 
         if (ftpItem.Type == FtpObjectType.Directory)
         {
-            if (await IsGameFolder(client, ftpItem, throttle, token)) return [ftpItem.FullName];
+            if (await IsGameFolder(client, ftpItem, throttle, token))
+            {
+                return [ftpItem.FullName];
+            }
 
             var result = new List<string>();
             await Task.Delay(throttle, token);
@@ -114,7 +127,10 @@ public class FtpReader
     {
         var client = new AsyncFtpClient(uri.Host, uri.Port);
         var creds = uri.UserInfo?.Split(':');
-        if (creds?.Length == 2) client.Credentials = new NetworkCredential(creds[0], creds[1]);
+        if (creds?.Length == 2)
+        {
+            client.Credentials = new NetworkCredential(creds[0], creds[1]);
+        }
 
         client.Config.RetryAttempts = 3;
         return client;

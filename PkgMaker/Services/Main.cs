@@ -1,33 +1,30 @@
 using System.CommandLine;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using PkgMaker.Models;
 using PkgMaker.Models.Commands;
-using PkgMaker.Models.Pkg;
-using PkgMaker.Models.Pkg.Entries;
-using PkgMaker.Models.Pkg.Enums;
 using PkgMaker.Utils;
+using ToolStation.Ps3Formats.Pkg;
+using ToolStation.Ps3Formats.Pkg.Entries;
+using ToolStation.Ps3Formats.Pkg.Enums;
 
 namespace PkgMaker.Services;
 
-public class Main
+internal static class Main
 {
-    public async Task Run(IReadOnlyList<string> sysArgs, CancellationToken token)
+    public static async Task Run(IReadOnlyList<string> sysArgs, CancellationToken token)
     {
         var rootCommand = new Root
         {
-            Launcher =
-            {
-                Action = new RecognizedCommandAction(MakeLaunchPkg)
-            },
-            Prepare =
-            {
-                Action = new RecognizedCommandAction(PrepareScript)
-            }
+            Launcher = { Action = new RecognizedCommandAction(MakeLaunchPkg) },
+            Prepare = { Action = new RecognizedCommandAction(PrepareScript) },
+            Installer = { Action = new RecognizedCommandAction(MakeInstallPkg) },
+            Manual = { Action = new RecognizedCommandAction(MakeManualPkg) },
         };
         rootCommand.Test.SetAction(Test);
         var args = rootCommand.Parse(sysArgs);
-        if (args is {Tokens: []} or {Action: RecognizedCommandAction, Tokens.Count: 1, Errors: []})
+        if (args is { Tokens: [] } or { Action: RecognizedCommandAction, Tokens.Count: 1, Errors: [] })
         {
             // show help by default: if no args, or known command with no args
             args.InvokeCurrentCommandHelp();
@@ -44,9 +41,154 @@ public class Main
         await args.InvokeAsync(cancellationToken: token);
     }
 
-    public async Task ReadFromBase(Values values, CancellationToken token)
+    private static async Task PrepareScript(ParseResult args, CancellationToken token)
     {
-        if (string.IsNullOrWhiteSpace(values.Base)) return;
+        var source = args.GetRequiredValue(Prepare.Source);
+        var output = args.GetRequiredValue(Prepare.Output);
+        var force = args.GetValue(Prepare.Force);
+        var recursive = args.GetValue(Prepare.Recursive);
+        var throttle = args.GetValue(Prepare.Throttle);
+        Log($"""
+             Initial parameters:
+                 {nameof(source)}=[{source}], {nameof(recursive)}=[{recursive}], {nameof(force)}=[{force}]
+                 {nameof(output)}=[{output}]
+             """);
+
+        if (output.Exists && !force)
+        {
+            throw new InvalidOperationException($"Output [{output.FullName}] exists. Pass -f to overwrite");
+        }
+
+        var app = Environment.ProcessPath;
+        var entries = await ListEntries(source, recursive, throttle, token);
+        var sb = new StringBuilder();
+        foreach (var entry in entries.Order())
+        {
+            sb.Append($"{app} launcher -b \"{entry}\"\n");
+        }
+
+        await File.WriteAllTextAsync(output.FullName, sb.ToString(), token);
+        Log($"Saved script to [{output.FullName}]: {entries.Count} entries");
+    }
+
+    private static async Task MakeLaunchPkg(ParseResult args, CancellationToken token)
+    {
+        var values = new Values
+        {
+            Now = DateTime.Now,
+            Base = args.GetValue(Launcher.Base),
+            Output = args.GetValue(Launcher.Output),
+            Force = args.GetValue(Launcher.Force),
+            Preview = args.GetValue(Launcher.Preview),
+            Timeout = args.GetValue(Launcher.Timeout) ?? 1
+        };
+        Log(values.ToInitString());
+
+        await ReadFromBase(values, token);
+        Log(values.ToInfoString("Values read from base"));
+        var p = new MetadataProvider();
+        // required
+        values.Title = MetadataProvider.FormatTitle(args.GetValue(Launcher.Title) ?? values.Title);
+        values.Game = args.GetValue(Launcher.Game) ?? values.Game;
+        // automatic
+        values.TitleId = MetadataProvider.FormatTitleId(args.GetValue(Launcher.TitleId) ?? MetadataProvider.GenerateTitleId(values.Title));
+        values.Label = MetadataProvider.FormatLabel(args.GetValue(Launcher.Label) ?? MetadataProvider.GenerateLabel(values.Title));
+        values.ContentId = MetadataProvider.FormatLaunchContentId(values);
+        values.Command = MetadataProvider.GenerateCommand(args.GetValue(Launcher.Command), values.Command, values.TitleId);
+        values.Script = MetadataProvider.FormatScript(MetadataProvider.GenerateScript(args.GetValue(Launcher.Script), values.TitleId, values.Game, values.Timeout));
+        values.ParamHis = MetadataProvider.FormatParamHis(MetadataProvider.GenerateParamHis(args.GetValue(Launcher.ParamHis), args, values), values.Now);
+        values.ParamSfo = await MetadataProvider.GenerateParamSfo(args.GetValue(Launcher.ParamSfo), values, token);
+        values.Icon = await MetadataProvider.ReadFileOrFallback(args.GetValue(Launcher.Icon), values.Icon, token) ?? Resources.GetEmbedded("ICON0.PNG");
+        values.Background = await MetadataProvider.ReadFileOrFallback(args.GetValue(Launcher.Background), values.Background, token);
+        values.Overlay = await MetadataProvider.ReadFileOrFallback(args.GetValue(Launcher.Overlay), values.Overlay, token);
+        values.OverlaySd = await MetadataProvider.ReadFileOrFallback(args.GetValue(Launcher.OverlaySd), values.OverlaySd, token);
+        values.Video = await MetadataProvider.ReadFileOrFallback(args.GetValue(Launcher.Video), values.Video, token);
+        values.Sound = await MetadataProvider.ReadFileOrFallback(args.GetValue(Launcher.Sound), values.Sound, token);
+        Log(values.ToInfoString("Overrides from arguments and auto-generated values"));
+        var outFile = await GeneratePkg(values, token);
+        Log($"Saved package to [{outFile.FullName}], {outFile.Length} bytes");
+    }
+
+    private static async Task MakeInstallPkg(ParseResult args, CancellationToken token)
+    {
+        var input = args.GetRequiredValue(Installer.Input);
+        var output = args.GetRequiredValue(Installer.Output);
+        var name = args.GetValue(Installer.PkgName) ?? $"{input.Name}";
+        var force = args.GetValue(Installer.Force);
+        await MakePkg(input, name, force, PkgContentType.Theme, null, true, output, token);
+    }
+
+    private static async Task MakeManualPkg(ParseResult args, CancellationToken token)
+    {
+        var input = args.GetRequiredValue(Manual.Input);
+        var output = args.GetRequiredValue(Manual.Output);
+        var name = args.GetValue(Manual.PkgName) ?? $"{input.Name}";
+        var force = args.GetValue(Manual.Force);
+        var contentType = PkgContentType.ParseAny(args.GetValue(Manual.ContentType));
+        var pkgType = PkgType.ParseAny(args.GetValue(Manual.PackageType));
+        await MakePkg(input, name, force, contentType, pkgType, false, output, token);
+    }
+
+    private static async Task MakePkg(DirectoryInfo input, string name, bool force, PkgContentType? contentType, PkgType? pkgType, bool absolutePaths, DirectoryInfo output, CancellationToken token)
+    {
+        var fileName = name.EndsWith(".pkg", StringComparison.OrdinalIgnoreCase)
+            ? name
+            : name + ".pkg";
+        var outFile = new FileInfo(Path.Join(output.FullName, fileName));
+        if (outFile.Exists && !force)
+        {
+            throw new InvalidOperationException($"Output [{outFile.FullName}] exists. Pass -f to overwrite");
+        }
+
+        outFile.Directory!.Create();
+        var pkg = new PkgBuilder
+        {
+            ContentId = MetadataProvider.FormatInstallContentId(name),
+            ForceAbsolutePaths = absolutePaths,
+            ContentType = contentType,
+            PackageType = pkgType
+        };
+
+        foreach (var x in input.EnumerateFiles("*", SearchOption.AllDirectories))
+        {
+            var path = Path.GetRelativePath(input.FullName, x.FullName).Replace('\\', '/').Trim('/');
+
+            PkgFileFlags? flags = x.Name == "EBOOT.BIN"
+                ? PkgFileFlags.Npdrm | PkgFileFlags.Overwrites
+                : null;
+            pkg.AddFile(new PkgFile(path, x.OpenRead(), flags));
+        }
+
+        await using (var o = outFile.OpenWrite())
+        {
+            await pkg.WriteTo(o, token);
+        }
+
+        outFile.Refresh();
+        Log($"Saved package to [{outFile.FullName}], {outFile.Length} bytes");
+    }
+
+    private static async Task Test(ParseResult args, CancellationToken token)
+    {
+        if (Environment.MachineName == "AMARU")
+        {
+            await Scratch.Debug(token);
+            return;
+        }
+
+        Log("Congratulations! You found hidden developer command. Here's your reward!");
+        using var proc = new Process();
+        proc.StartInfo.UseShellExecute = true;
+        proc.StartInfo.FileName = Encoding.UTF8.GetString(Convert.FromBase64String("aHR0cHM6Ly93d3cueW91dHViZS5jb20vd2F0Y2g/dj1kUXc0dzlXZ1hjUQ=="));
+        proc.Start();
+    }
+
+    private static async Task ReadFromBase(Values values, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(values.Base))
+        {
+            return;
+        }
 
         var f = new FileInfo(values.Base);
         if (f.Exists && FileUtils.IsIso(f.Name))
@@ -60,9 +202,13 @@ public class Main
         if (d.Exists)
         {
             if (FileUtils.HasGameSfo(d))
-                await new FileReader().ReadGameFolder(d, values, token);
+            {
+                await FileReader.ReadGameFolder(d, values, token);
+            }
             else
-                await new FileReader().ReadPlainFolder(d, values, token);
+            {
+                await FileReader.ReadPlainFolder(d, values, token);
+            }
 
             return;
         }
@@ -85,115 +231,35 @@ public class Main
         throw new ArgumentException($"Invalid base [{values.Base}]. Expected folder, iso, http or ftp url");
     }
 
-    public async Task<IReadOnlyList<string>> ListEntries(string source, bool recursive, double? throttle, CancellationToken token)
+    private static async Task<IReadOnlyList<string>> ListEntries(string source, bool recursive, double? throttle, CancellationToken token)
     {
         var d = new DirectoryInfo(source);
         if (d.Exists)
-            return new FileReader().List(d, recursive, token)
-                .Select(x => x.FullName)
-                .ToList();
+        {
+            return FileReader.List(d, recursive, token).Select(x => x.FullName).ToList();
+        }
 
         if (Uri.TryCreate(source, UriKind.Absolute, out var uri))
         {
             if (uri.Scheme is "http" or "https")
             {
                 var t = TimeSpan.FromSeconds(throttle ?? 0.3);
-                return await new HttpReader().List(uri, recursive, t, token);
+                return await HttpReader.List(uri, recursive, t, token);
             }
 
             if (uri.Scheme is "ftp")
             {
                 var t = TimeSpan.FromSeconds(throttle ?? 0);
-                return await new FtpReader().List(uri, recursive, t, token);
+                return await FtpReader.List(uri, recursive, t, token);
             }
         }
 
         throw new ArgumentException($"Invalid base [{source}]. Expected folder, iso, http or ftp url");
     }
 
-    private async Task PrepareScript(ParseResult args, CancellationToken token)
-    {
-        var now = DateTime.Now;
-        var source = args.GetRequiredValue(Prepare.Source);
-        var output = args.GetRequiredValue(Prepare.Output);
-        var force = args.GetValue(Prepare.Force);
-        var recursive = args.GetValue(Prepare.Recursive);
-        var throttle = args.GetValue(Prepare.Throttle);
-        Log($"""
-             Initial parameters:
-                 {nameof(source)}=[{source}], {nameof(recursive)}=[{recursive}], {nameof(force)}=[{force}]
-                 {nameof(output)}=[{output}]
-             """);
+    public static void Log(object? value) => Console.WriteLine(value);
 
-        if (output.Exists && !force) throw new InvalidOperationException($"Output [{output.FullName}] exists. Pass -f to overwrite");
-
-        var app = Environment.ProcessPath;
-        var entries = await ListEntries(source, recursive, throttle, token);
-        var sb = new StringBuilder();
-        foreach (var entry in entries.Order())
-        {
-            var line = $"{app} launcher -b \"{entry}\"\n";
-            sb.Append(line);
-        }
-
-        await File.WriteAllTextAsync(output.FullName, sb.ToString(), token);
-        Log($"Saved script to [{output.FullName}]: {entries.Count} entries");
-    }
-
-    private async Task MakeLaunchPkg(ParseResult args, CancellationToken token)
-    {
-        var values = new Values
-        {
-            Now = DateTime.Now,
-            Base = args.GetValue(Launcher.Base),
-            Output = args.GetValue(Launcher.Output),
-            Force = args.GetValue(Launcher.Force),
-            Preview = args.GetValue(Launcher.Preview),
-            Timeout = args.GetValue(Launcher.Timeout) ?? 1
-        };
-        Log(values.ToInitString());
-
-        await ReadFromBase(values, token);
-        Log(values.ToInfoString("Values read from base"));
-        var p = new MetadataProvider();
-        // required
-        values.Title = p.FormatTitle(args.GetValue(Launcher.Title) ?? values.Title);
-        values.Game = args.GetValue(Launcher.Game) ?? values.Game;
-        // automatic
-        values.TitleId = p.FormatTitleId(args.GetValue(Launcher.TitleId) ?? p.GenerateTitleId(values.Title));
-        values.Label = p.FormatLabel(args.GetValue(Launcher.Label) ?? p.GenerateLabel(values.Title));
-        values.ContentId = p.FormatContentId(values);
-        values.Command = p.GenerateCommand(args.GetValue(Launcher.Command), values.Command, values.TitleId);
-        values.Script = p.FormatScript(p.GenerateScript(args.GetValue(Launcher.Script), values.TitleId, values.Game, values.Timeout));
-        values.ParamHis = p.FormatParamHis(p.GenerateParamHis(args.GetValue(Launcher.ParamHis), args, values), values.Now);
-        values.ParamSfo = await p.GenerateParamSfo(args.GetValue(Launcher.ParamSfo), values, token);
-        values.Icon = await p.ReadFileOrFallback(args.GetValue(Launcher.Icon), values.Icon, token) ?? Resources.GetEmbedded("ICON0.PNG");
-        values.Background = await p.ReadFileOrFallback(args.GetValue(Launcher.Background), values.Background, token);
-        values.Overlay = await p.ReadFileOrFallback(args.GetValue(Launcher.Overlay), values.Overlay, token);
-        values.OverlaySd = await p.ReadFileOrFallback(args.GetValue(Launcher.OverlaySd), values.OverlaySd, token);
-        values.Video = await p.ReadFileOrFallback(args.GetValue(Launcher.Video), values.Video, token);
-        values.Sound = await p.ReadFileOrFallback(args.GetValue(Launcher.Sound), values.Sound, token);
-        Log(values.ToInfoString("Overrides from arguments and auto-generated values"));
-        var outFile = await GeneratePkg(values, token);
-        Log($"Saved package to [{outFile.FullName}], {outFile.Length} bytes");
-    }
-
-    private async Task Test(ParseResult args, CancellationToken token)
-    {
-        if (Environment.MachineName == "AMARU")
-        {
-            await Scratch.Debug(token);
-            return;
-        }
-
-        Log("Congratulations! You found hidden developer command. Here's your reward!");
-        using var proc = new Process();
-        proc.StartInfo.UseShellExecute = true;
-        proc.StartInfo.FileName = Encoding.UTF8.GetString(Convert.FromBase64String("aHR0cHM6Ly93d3cueW91dHViZS5jb20vd2F0Y2g/dj1kUXc0dzlXZ1hjUQ=="));
-        proc.Start();
-    }
-
-    private async Task<FileInfo> GeneratePkg(Values values, CancellationToken token)
+    private static async Task<FileInfo> GeneratePkg(Values values, CancellationToken token)
     {
         ArgumentNullException.ThrowIfNull(values.ContentId);
         ArgumentNullException.ThrowIfNull(values.Icon);
@@ -207,10 +273,14 @@ public class Main
         var pkg = new PkgBuilder
         {
             ContentId = values.ContentId,
-            UseDangerousAbsolutePath = false
+            ForceAbsolutePaths = false
         };
         AddFile(pkg, "USRDIR/EBOOT.BIN", bin, PkgFileFlags.Overwrites | PkgFileFlags.Npdrm);
-        if (values.ParamSfo != null) pkg.AddFile(values.ParamSfo.ToPkgFile("PARAM.SFO"));
+        if (values.ParamSfo != null)
+        {
+            pkg.AddFile(values.ParamSfo.ToPkgFile("PARAM.SFO"));
+        }
+
         AddFile(pkg, "PARAM.HIS", values.ParamHis);
 
         AddPicture(pkg, "ICON0.PNG", values.Icon, 320, 176);
@@ -224,7 +294,10 @@ public class Main
         AddFile(pkg, "USRDIR/script.txt", values.Script);
 
         var outFile = new FileInfo(Path.Join(values.Output.FullName, $"{values.ContentId}.pkg"));
-        if (outFile.Exists && !values.Force) throw new InvalidOperationException($"Output [{outFile.FullName}] exists. Pass -f to overwrite");
+        if (outFile.Exists && !values.Force)
+        {
+            throw new InvalidOperationException($"Output [{outFile.FullName}] exists. Pass -f to overwrite");
+        }
 
         outFile.Directory!.Create();
         //await Scratch.DebugDumpFiles(values, bin, token);
@@ -238,12 +311,18 @@ public class Main
         return outFile;
     }
 
-    private async Task GeneratePreview(Values values, FileInfo outFile, CancellationToken token)
+    private static async Task GeneratePreview(Values values, FileInfo outFile, CancellationToken token)
     {
-        if (!values.Preview) return;
+        if (!values.Preview)
+        {
+            return;
+        }
 
         var outPng = new FileInfo(Path.ChangeExtension(outFile.FullName, ".png"));
-        if (outPng.Exists && !values.Force) throw new InvalidOperationException($"Preview [{outFile.FullName}] exists. Pass -f to overwrite");
+        if (outPng.Exists && !values.Force)
+        {
+            throw new InvalidOperationException($"Preview [{outFile.FullName}] exists. Pass -f to overwrite");
+        }
 
         var preview = await Paint.RenderPreview(values.Icon!, values.Background, values.Overlay, token);
         await using var output = outPng.OpenWrite();
@@ -251,23 +330,24 @@ public class Main
         Log($"Saved preview to [{outPng.FullName}]");
     }
 
-    private void AddPicture(PkgBuilder pkg, string name, byte[]? data, uint expectedWidth, uint expectedHeight)
+    private static void AddPicture(PkgBuilder pkg, string name, byte[]? data, uint expectedWidth, uint expectedHeight)
     {
-        if (data is null) return;
+        if (data is null)
+        {
+            return;
+        }
 
         Paint.CheckPngDimensions(data, expectedWidth, expectedHeight, name);
         pkg.AddFile(new PkgFile(name, new MemoryStream(data)));
     }
 
-    private void AddFile(PkgBuilder pkg, string name, byte[]? data, PkgFileFlags? flags = null)
+    private static void AddFile(PkgBuilder pkg, string name, byte[]? data, PkgFileFlags? flags = null)
     {
-        if (data is null) return;
+        if (data is null)
+        {
+            return;
+        }
 
         pkg.AddFile(new PkgFile(name, new MemoryStream(data), flags));
-    }
-
-    public static void Log(object? value)
-    {
-        Console.WriteLine(value);
     }
 }

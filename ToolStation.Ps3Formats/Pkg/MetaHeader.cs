@@ -1,7 +1,9 @@
-using PkgMaker.Utils;
+using System.Diagnostics.CodeAnalysis;
+using ToolStation.Ps3Formats.Utils;
 
-namespace PkgMaker.Models.Pkg;
+namespace ToolStation.Ps3Formats.Pkg;
 
+[SuppressMessage("Performance", "CA1805:Do not initialize unnecessarily", Justification = "For clarity")]
 public class MetaHeader : IPackable
 {
     public uint Unk1 = 1;
@@ -10,11 +12,11 @@ public class MetaHeader : IPackable
     public uint Unk4 = 2;
 
     public uint Unk21 = 4;
-    public uint ContentType; //9 == Theme, 5 == gameexec, 4 == gamedata
+    public uint ContentType;
     public uint Unk23 = 3;
     public uint Unk24 = 4;
 
-    public uint PackageType = 0x0E; //packageType 0x10 == patch, 0x8 == Demo&Key, 0x0 == Demo&Key (AND UserFiles = NotOverWrite), 0xE == normal, use 0xE for gamexec, and 8 for gamedata
+    public uint PackageType;
     public uint Unk32 = 4;
     public uint Unk33 = 8;
     public ushort SecondaryVersion = 0;
@@ -24,8 +26,7 @@ public class MetaHeader : IPackable
     public uint Unk42 = 5;
     public uint Unk43 = 4;
     public ushort PackagedBy = 0x1061;
-    public ushort PackagedVersion;
-
+    public ushort PackagedVersion = 0;
 
     public byte[] Pack()
     {

@@ -11,6 +11,7 @@ Ever wanted to...
 * customize how game icon or background look without modifying ISO or backup folder?
 * remove annoying sound or animation when game is selected in XMB?
 * have ISO/folder games listed along with other installed stuff to assign custom categories/folders?
+* use pkg as installer to copy files to arbitrary places?
 
 Now you can do it, semi-automated way. Single binary, no dependencies.
 
@@ -28,7 +29,7 @@ And here's what i have. Custom background image, icon and name taken from ISO, a
 
 ### Usage
 
-`PkgMaker` is a console app. Everything is described in `--help`. There are 2 commands: `launcher` to build pkg, and `prepare` to look for games and output a script for later editing and building packages. If you want to create launchers for all existing games on your PS3 in bulk, do it with `prepare` and specify remote location like `ftp://ps3.lan/dev_hdd0` or `http://10.10.10.3/`. Then edit generated `make_launch_pkgs` script to provide custom backgrounds for each game, disable sounds, change games to launch etc.
+`PkgMaker` is a console app. Everything is described in `--help`. There are several commands: `launcher` to build pkg, and `prepare` to look for games and output a script for later editing and building packages, `installer` to build pkg that installs files anywhere. If you want to create launchers for all existing games on your PS3 in bulk, do it with `prepare` and specify remote location like `ftp://ps3.lan/dev_hdd0` or `http://10.10.10.3/`. Then edit generated `make_launch_pkgs` script to provide custom backgrounds for each game, disable sounds, change games to launch etc.
 
 For best results i recommend storing ISOs and game folders with a TITLE_ID in their names - this way Webman will have no problem locating unique games.
 
@@ -36,7 +37,11 @@ If you want to mass install generated packages, place them on the root of USB dr
 
 If you rebuild a launcher and install it, files will be overwritten, but existing files won't be deleted. So you'll see updated icons, but if you decided to disable background - it won't go away. You have to uninstall launcher first.
 
-### Examples for `launcher`
+## `PkgMaker launcher`
+
+### Examples
+
+<details><summary><b>Click to expand ℹ️</b></summary>
 
 #### Simple shortcut
 
@@ -68,6 +73,8 @@ With folder as base, copy pictures. There is no PARAM.SFO, so set launcher title
 
 Specify multiline app title (bash syntax), label, custom Webman command, and exclude script file because we won't need it anyway
 
+</details>
+
 ### Debugging
 
 * Check if Webman is OK, launcher relies on its web commands
@@ -76,7 +83,12 @@ Specify multiline app title (bash syntax), label, custom Webman command, and exc
 * script.txt is a Webman bat that is called from HTTP command. Try executing it yourself, inserting beep1/beep2 between lines to see where it fails
 * No access to files? Check launcher "Update History" in XMB, launch and script contents are copied there by default
 
-### Examples for `prepare`
+
+## `PkgMaker prepare`
+
+### Examples
+
+<details><summary><b>Click to expand ℹ️</b></summary>
 
 #### Remote PS3ISO
 
@@ -102,12 +114,16 @@ Scan for ISOs or game folders recursively
 
 Scan for ISOs or game folders everywhere on remote system
 
+</details>
+
 ### Notes
 
 * Idea is to scan for existing games, use them as base (titles, icons, etc), then manually review and customize script before making packages
 * For PS1/PS2/PSP ISOs you have edit script and add title (-t) manually, or making launcher will fail
 * Other formats mountable by Webman (ROMS, .BIN/.CUE, etc) are not supported yet. Create Github issue if you can help with testing
 * Some folders are blacklisted from search over FTP and HTTP to avoid wasting time, eg `/dev_blind` or `/dev_hdd0/game`
+
+
 
 ## EBOOT.BIN
 
@@ -132,8 +148,6 @@ Since app knows its own TITLE_ID, it is not required to compile, patch or resign
 
 No implemented yet - feel free to open issues so that i know anyone needs these:
 
-* making pkgs that install files in arbitrary locations
-* making pkgs of other content types without providing external param.sfo
 * support other webman mountable game formats: ROMS, PSX BIN/CUE, etc
 * PSP ISO: extracting param.sfo and icons, proper autostart
-* UI if anyone needs it?
+* GUI if anyone needs it?
