@@ -17,7 +17,7 @@ echo "Version is [${version}]"
 # building eboot.bin requires ps3toolchain
 # cd homebrew; make npdrm
 
-dotnet build -warnaserror
+dotnet build -p:version="${version}" -c Release -warnaserror
 
 # relevant options
 # -noconlog
@@ -25,12 +25,16 @@ dotnet build -warnaserror
 # -p:PublishAot=false
 # --no-self-contained
 
-for project in */*.csproj ;
+for platform in linux-x64 win-x64 osx-arm64 ;
 do
-    for platform in linux-x64 win-x64 osx-arm64 ;
-    do
-        dotnet publish "${project}" -p:version="${version}" -o "_publish/${platform}" -r "${platform}" -c Release -p:DebugType=None -p:DebugSymbols=false -p:PublishSingleFile=true --self-contained -p:PublishTrimmed=true
-    done
+    dotnet publish -p:version="${version}" -c Release -p:nowarn="IL2104;" -warnaserror --artifacts-path "_artifacts" -r "${platform}" -p:DebugType=None -p:DebugSymbols=false -p:PublishSingleFile=true --self-contained -p:PublishTrimmed=true
 done
 
-ls -lRh _publish
+dotnet pack -p:version="${version}" -c Release -warnaserror --artifacts-path "_artifacts" -p:DebugType=None -p:DebugSymbols=false
+dotnet nuget push _artifacts/package/release/*.nupkg -k "${NUGET_KEY}"
+
+rm -rf _artifacts/bin
+rm -rf _artifacts/obj
+ls -lRh _artifacts
+# _artifacts/publish/PROJECT/release_PLATFORM/file
+# _artifacts/package/release/*.nupkg
