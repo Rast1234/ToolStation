@@ -31,7 +31,7 @@ do
 done
 
 dotnet pack -p:version="${version}" -c Release -warnaserror --artifacts-path "_artifacts" -p:DebugType=None -p:DebugSymbols=false
-#dotnet nuget push _artifacts/package/release/*.nupkg -s "${NUGET_URL}" -k "${NUGET_KEY}"
+dotnet nuget push _artifacts/package/release/*.nupkg -s "${NUGET_URL}" -k "${NUGET_KEY}"
 
 rm -rf _artifacts/bin
 rm -rf _artifacts/obj
