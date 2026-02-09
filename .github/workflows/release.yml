@@ -12,6 +12,9 @@ jobs:
       with:
         dotnet-version: '10'
     - run: ./publish.sh
+      env:
+        NUGET_URL: "https://api.nuget.org/v3/index.json"
+        NUGET_KEY: ${{ secrets.NUGET_KEY }}
     - uses: actions/upload-artifact@v6
       with:
         name: publish_artifact
@@ -19,7 +22,6 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
-    concurrency: publish-release
     permissions:
       contents: write
     steps:
