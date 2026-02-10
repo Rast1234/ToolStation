@@ -1,6 +1,6 @@
 # ToolStation
 
-Tools for PS3
+Tools for PS3. Pre-built binaries for windows/linux/mac are on releases page. Also published as [ToolStation.Ps3Formats nuget package](https://www.nuget.org/packages/ToolStation.Ps3Formats/).
 
 ## PkgMaker <span float="left"><img src="icon.png" /></span>
 
@@ -213,6 +213,10 @@ Launcher comes with compiled homebrew, based on `PKGLAUNCH`. How it works:
 * default script is to mount and launch a game
 
 Since app knows its own TITLE_ID, it is not required to compile, patch or resign it every time for different launchers.
+
+## ToolStation.Ps3Formats
+
+Format support library has [its own readme](ToolStation.Ps3Formats/README.md). Nuget package is here: [nuget.org/packages/ToolStation.Ps3Formats](https://www.nuget.org/packages/ToolStation.Ps3Formats/).
 
 ## Credits
 

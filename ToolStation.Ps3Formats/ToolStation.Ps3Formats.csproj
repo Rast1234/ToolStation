@@ -6,6 +6,15 @@
     <Nullable>enable</Nullable>
     <InvariantGlobalization>true</InvariantGlobalization>
     <IsPublishable>false</IsPublishable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>Reading/writing PS3 file formats</Description>
+    <PackageProjectUrl>https://github.com/Rast1234/ToolStation</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Rast1234/ToolStation</RepositoryUrl>
+    <PackageTags>ps3;cfw;pkg;sfo</PackageTags>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\"/>
+  </ItemGroup>
 
 </Project>
